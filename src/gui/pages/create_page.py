@@ -1,7 +1,7 @@
 """Create / edit page: the pixel-art painting workspace."""
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QKeySequence, QShortcut
+from PySide6.QtGui import QAction, QKeySequence, QShortcut
 from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QVBoxLayout, QWidget
 from qfluentwidgets import (
     BodyLabel,
@@ -10,7 +10,10 @@ from qfluentwidgets import (
     InfoBarPosition,
     LineEdit,
     PrimaryPushButton,
+    PrimarySplitPushButton,
     PushButton,
+    RoundMenu,
+    SplitPushButton,
     StrongBodyLabel,
     ToolButton,
 )
@@ -34,6 +37,7 @@ class CreatePage(BasePage):
         self._rule: ArkPicRule = RuleCN2026Aug
         self._pic: ArkPic = ArkPic(self._rule)
         self._stored_id: str | None = None  # None = unsaved new painting
+        self._saved_snapshot: list[list[int]] | None = None  # last saved/loaded grid
         self._canvas: PixelCanvas | None = None
         self._palette: ColorPalette | None = None
         self._build_ui()
@@ -48,16 +52,15 @@ class CreatePage(BasePage):
         # --- Action bar (top) ---
         actions = QHBoxLayout()
         self.btnNew = PushButton(FIF.ADD, "New")
-        self.btnSave = PrimaryPushButton(FIF.SAVE, "Save")
-        self.btnSaveAs = PushButton(FIF.SAVE_AS, "Save As")
+        self.btnSave = PrimarySplitPushButton(FIF.SAVE, "Save", self)
+        self._setup_save_menu()
         self.btnExport = PushButton(FIF.SHARE, "Export Code")
-        self.btnImport = PushButton(FIF.FOLDER, "Import Code")
+        self.btnImport = PushButton(FIF.DOWNLOAD, "Import Code")
         self.btnSmart = PrimaryPushButton(FIF.PHOTO, "Smart Create")
         self.btnGamePaint = PrimaryPushButton(FIF.BRUSH, "Auto Paint in Game")
         actions.addWidget(self.btnNew)
         actions.addWidget(self.btnSmart)
         actions.addWidget(self.btnSave)
-        actions.addWidget(self.btnSaveAs)
         actions.addWidget(self.btnExport)
         actions.addWidget(self.btnImport)
         actions.addStretch()
@@ -167,7 +170,6 @@ class CreatePage(BasePage):
     def _connect_signals(self) -> None:
         self.btnNew.clicked.connect(self._new_painting)
         self.btnSave.clicked.connect(self._on_save)
-        self.btnSaveAs.clicked.connect(self._on_save_as)
         self.btnExport.clicked.connect(self._on_export_code)
         self.btnImport.clicked.connect(self._on_import_code)
         self.btnSmart.clicked.connect(self._on_smart_create)
@@ -186,6 +188,14 @@ class CreatePage(BasePage):
         signalBus.newPainting.connect(self._new_painting)
         signalBus.editPainting.connect(self._load_by_id)
 
+    def _setup_save_menu(self) -> None:
+        """Attach the Save As action to the Save button's drop-down menu."""
+        action = QAction(FIF.SAVE_AS.icon(), "Save As", self)
+        action.triggered.connect(self._on_save_as)
+        menu = RoundMenu(parent=self)
+        menu.addAction(action)
+        self.btnSave.setFlyout(menu)
+
     # ------------------------------------------------------------------
     # Canvas / palette lifecycle
     # ------------------------------------------------------------------
@@ -198,9 +208,22 @@ class CreatePage(BasePage):
                 item.widget().deleteLater()
 
         self._canvas = PixelCanvas(self._pic)
+        self._canvas.contentChanged.connect(self._update_save_state)
         self._canvas.undoAvailabilityChanged.connect(self.toolUndo.setEnabled)
         self._canvas.redoAvailabilityChanged.connect(self.toolRedo.setEnabled)
         self.canvasHolder.addWidget(self._canvas)
+        self._update_save_state()
+
+    def _has_unsaved_changes(self) -> bool:
+        """Return whether the painting differs from the last saved/loaded version.
+
+        A never-saved painting always counts as having unsaved changes.
+        """
+        return self._saved_snapshot is None or self._pic.grid != self._saved_snapshot
+
+    def _update_save_state(self) -> None:
+        """Disable Save when there are no unsaved changes; Save As stays available."""
+        self.btnSave.button.setEnabled(self._has_unsaved_changes())
 
     def _rebuild_palette(self) -> None:
         # Remove old palette
@@ -218,6 +241,7 @@ class CreatePage(BasePage):
 
     def _new_painting(self) -> None:
         self._stored_id = None
+        self._saved_snapshot = None
         self._pic = ArkPic(self._rule)
         self.nameEdit.clear()
         self.descEdit.clear()
@@ -236,6 +260,7 @@ class CreatePage(BasePage):
         pic, rule = stored.to_ark_pic()
         self._rule = rule
         self._pic = pic
+        self._saved_snapshot = pic.snapshot()
         self.nameEdit.setText(stored.name)
         self.descEdit.setText(stored.description)
         # Lock ruleset selector
@@ -251,6 +276,7 @@ class CreatePage(BasePage):
         if name and name in ALL_RULESETS:
             self._rule = ALL_RULESETS[name]
             self._pic = ArkPic(self._rule)
+            self._saved_snapshot = None
             self._rebuild_canvas()
             self._rebuild_palette()
             self._on_color_selected(self._rule.default_color_id)
@@ -304,6 +330,8 @@ class CreatePage(BasePage):
 
         storage.save(stored)
         self._stored_id = stored.id
+        self._saved_snapshot = self._pic.snapshot()
+        self._update_save_state()
         self.ruleCombo.setEnabled(False)
         signalBus.paintingSaved.emit()
         InfoBar.success("Saved", f"'{stored.name}' saved to gallery.",
@@ -374,6 +402,7 @@ class CreatePage(BasePage):
                 result = decode(code, self._rule)
                 self._pic = result.pic
                 self._stored_id = None
+                self._saved_snapshot = None
                 # Restore metadata if present
                 if result.name:
                     self.nameEdit.setText(result.name)
@@ -396,6 +425,7 @@ class CreatePage(BasePage):
             if result is not None:
                 self._pic = result
                 self._stored_id = None
+                self._saved_snapshot = None
                 self._rebuild_canvas()
                 InfoBar.success(
                     "Smart Create",

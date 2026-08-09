@@ -1,20 +1,20 @@
 """Home page: welcome banner, quick-start and device control."""
 
-from PySide6.QtWidgets import QHBoxLayout
+from PySide6.QtWidgets import QHBoxLayout, QLabel
 from qfluentwidgets import (
     BodyLabel,
     InfoBar,
     PrimaryPushButton,
+    PushButton,
     PushSettingCard,
     SettingCard,
     SettingCardGroup,
-    StrongBodyLabel,
     TitleLabel,
+    setFont,
 )
 from qfluentwidgets import FluentIcon as FIF
 
 from src.app.device_manager import deviceManager
-from src.app.signal_bus import signalBus
 from src.core.game_task import gameTask
 from src.gui.components.base_page import BasePage
 from src.gui.dialogs.device_dialog import browse_and_connect
@@ -32,42 +32,43 @@ class HomePage(BasePage):
 
     def _build_ui(self) -> None:
         self.viewLayout.addWidget(TitleLabel("Ark Picit"))
-        self.viewLayout.addWidget(BodyLabel("Pixel art painter for Arknights art mode"))
+        self.viewLayout.addWidget(BodyLabel("Arknights Pixel Art Painter"))
 
         self.viewLayout.addSpacing(16)
 
-        # Quick-start
-        self.viewLayout.addWidget(StrongBodyLabel("Quick Start"))
+        # Quick-start (title matches the SettingCardGroup headings below)
+        quick_start_title = QLabel("Quick Start", self)
+        setFont(quick_start_title, 20)
+        self.viewLayout.addWidget(quick_start_title)
 
         btn_row = QHBoxLayout()
-        self.btnNew = PrimaryPushButton(FIF.ADD, "New Painting")
-        self.btnNew.clicked.connect(lambda: signalBus.newPainting.emit())
+        self.btnNew = PrimaryPushButton(FIF.EDIT, "Go to Create")
+        self.btnNew.clicked.connect(self._go_create)
+        self.btnOpenGallery = PushButton(FIF.PHOTO, "Open My Gallery")
+        self.btnOpenGallery.clicked.connect(self._open_gallery)
         btn_row.addWidget(self.btnNew)
+        btn_row.addWidget(self.btnOpenGallery)
         btn_row.addStretch()
         self.viewLayout.addLayout(btn_row)
 
         self.viewLayout.addSpacing(16)
 
-        # Device
-        self.deviceGroup = SettingCardGroup("Device", self)
+        # Controller and in-game paint task status
+        self.deviceGroup = SettingCardGroup("Controller", self)
 
         self.browseCard = PushSettingCard(
-            "Browse", FIF.SEARCH, "Device", "Browse and connect a game window or adb device",
+            "Connect", FIF.SEARCH, "Controller", "Browse and connect a game window or adb device",
         )
+        self.browseCard.button.setIcon(FIF.CONNECT.icon())
         self.deviceGroup.addSettingCard(self.browseCard)
 
-        self.deviceCard = SettingCard(FIF.EMBED, "Current Device", "No device connected")
+        self.deviceCard = SettingCard(FIF.EMBED, "Current Controller", "No controller connected")
         self.deviceGroup.addSettingCard(self.deviceCard)
 
-        self.viewLayout.addWidget(self.deviceGroup)
-
-        self.viewLayout.addSpacing(16)
-
-        # In-game paint task status
-        self.taskGroup = SettingCardGroup("In-Game Paint Task", self)
         self.taskCard = SettingCard(FIF.BRUSH, "Task Status", "Not started")
-        self.taskGroup.addSettingCard(self.taskCard)
-        self.viewLayout.addWidget(self.taskGroup)
+        self.deviceGroup.addSettingCard(self.taskCard)
+
+        self.viewLayout.addWidget(self.deviceGroup)
 
         self.viewLayout.addStretch()
 
@@ -79,6 +80,16 @@ class HomePage(BasePage):
         gameTask.succeeded.connect(self._on_task_succeeded)
         gameTask.drawingFinished.connect(self._on_drawing_finished)
         gameTask.failed.connect(self._on_task_failed)
+
+    def _go_create(self) -> None:
+        """Switch to the create page without resetting the current canvas."""
+        window = self.window()
+        window.switchTo(window.createPage)
+
+    def _open_gallery(self) -> None:
+        """Switch to the gallery page."""
+        window = self.window()
+        window.switchTo(window.galleryPage)
 
     # ------------------------------------------------------------------
     # Device status
@@ -93,7 +104,7 @@ class HomePage(BasePage):
     def _refresh_device_card(self) -> None:
         candidate = deviceManager.candidate
         if candidate is None:
-            self.deviceCard.setContent("No device connected")
+            self.deviceCard.setContent("No controller connected")
         else:
             self.deviceCard.setContent(f"{candidate.kind.value} - {candidate.label}")
 

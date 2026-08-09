@@ -38,7 +38,7 @@ class DeviceDialog(MessageBoxBase):
         super().__init__(parent)
         self.widget.setMinimumWidth(460)
         self.viewLayout.setSpacing(12)
-        self.viewLayout.addWidget(SubtitleLabel("Select a device to connect"))
+        self.viewLayout.addWidget(SubtitleLabel("Select a controller to connect"))
 
         self.listWidget = ListWidget(self)
         self.listWidget.setMinimumHeight(260)
@@ -121,7 +121,7 @@ def browse_and_connect(parent: QWidget, on_connected=None) -> None:
         if not candidates:
             _cleanup()
             InfoBar.warning(
-                "No devices found",
+                "No controllers found",
                 "No windows or adb devices are available. Start the game or an emulator, then try again.",
                 parent=parent,
                 duration=5000,
@@ -138,8 +138,8 @@ def browse_and_connect(parent: QWidget, on_connected=None) -> None:
         _cleanup()
         candidate = deviceManager.candidate
         InfoBar.success(
-            "Device connected",
-            f"Connected to {candidate.label if candidate else 'device'}",
+            "Controller connected",
+            f"Connected to {candidate.label if candidate else 'controller'}",
             parent=parent,
             duration=3000,
         )
