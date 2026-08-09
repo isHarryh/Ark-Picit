@@ -15,7 +15,7 @@ from qfluentwidgets import (
 from qfluentwidgets import FluentIcon as FIF
 
 from src.app.device_manager import deviceManager
-from src.core.game_task import gameTask
+from src.core.tasks import gameTask
 from src.gui.components.base_page import BasePage
 from src.gui.dialogs.device_dialog import browse_and_connect
 from src.gui.dialogs.image_dialog import RegionVerifyDialog
@@ -132,7 +132,10 @@ class HomePage(BasePage):
         window.activateWindow()
         dialog = RegionVerifyDialog(image_path, layout, diff_cells, parent=window)
         if dialog.exec():
-            gameTask.start_drawing(incremental=dialog.incremental_enabled)
+            gameTask.start_drawing(
+                incremental=dialog.incremental_enabled,
+                click_delay_ms=dialog.click_delay_ms,
+            )
         else:
             gameTask.cancel()
             self.taskCard.setContent("Cancelled")

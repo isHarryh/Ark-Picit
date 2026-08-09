@@ -1,6 +1,9 @@
 """Create / edit page: the pixel-art painting workspace."""
 
-from PySide6.QtCore import Qt
+import logging
+import threading
+
+from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtGui import QAction, QKeySequence, QShortcut
 from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QVBoxLayout, QWidget
 from qfluentwidgets import (
@@ -28,9 +31,14 @@ from src.gui.components.base_page import BasePage
 from src.gui.components.color_palette import ColorPalette
 from src.gui.components.pixel_canvas import PixelCanvas
 
+logger = logging.getLogger(__name__)
+
 
 class CreatePage(BasePage):
     """Page for creating, editing, importing and exporting paintings."""
+
+    _canvasImported = Signal(object)  # ArkPic read from the game
+    _canvasImportFailed = Signal(str)  # error message
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -42,6 +50,8 @@ class CreatePage(BasePage):
         self._palette: ColorPalette | None = None
         self._build_ui()
         self._connect_signals()
+        self._canvasImported.connect(self._apply_imported_canvas)
+        self._canvasImportFailed.connect(self._show_import_error)
         self._new_painting()
 
     # ------------------------------------------------------------------
@@ -55,7 +65,8 @@ class CreatePage(BasePage):
         self.btnSave = PrimarySplitPushButton(FIF.SAVE, "Save", self)
         self._setup_save_menu()
         self.btnExport = PushButton(FIF.SHARE, "Export Code")
-        self.btnImport = PushButton(FIF.DOWNLOAD, "Import Code")
+        self.btnImport = SplitPushButton(FIF.DOWNLOAD, "Import", self)
+        self._setup_import_menu()
         self.btnSmart = PrimaryPushButton(FIF.PHOTO, "Smart Create")
         self.btnGamePaint = PrimaryPushButton(FIF.BRUSH, "Auto Paint in Game")
         actions.addWidget(self.btnNew)
@@ -195,6 +206,22 @@ class CreatePage(BasePage):
         menu = RoundMenu(parent=self)
         menu.addAction(action)
         self.btnSave.setFlyout(menu)
+
+    def _setup_import_menu(self) -> None:
+        """Attach the import actions to the Import button's drop-down menu."""
+        menu = RoundMenu(parent=self)
+        menu.addAction(
+            QAction(FIF.CODE.icon(), "Import From Code", self, triggered=self._on_import_code)
+        )
+        menu.addAction(
+            QAction(
+                FIF.BRUSH.icon(),
+                "Import From Game Canvas",
+                self,
+                triggered=self._on_import_game_canvas,
+            )
+        )
+        self.btnImport.setFlyout(menu)
 
     # ------------------------------------------------------------------
     # Canvas / palette lifecycle
@@ -379,42 +406,100 @@ class CreatePage(BasePage):
         from src.gui.dialogs.code_dialog import CodeDialog
 
         dialog = CodeDialog("", self.window(), readonly=False)
-        if dialog.exec():
-            code = dialog.get_text().strip()
-            if not code:
-                return
+        if not dialog.exec():
+            return
+        code = dialog.get_text().strip()
+        if not code:
+            return
 
-            # Warn about overwrite
-            from qfluentwidgets import MessageBox
+        try:
+            result = decode(code, self._rule)
+        except CodeError as e:
+            InfoBar.error("Import failed", str(e), parent=self, duration=3000)
+            return
 
-            warn = MessageBox(
-                "Overwrite current canvas?",
-                "Importing will replace the current painting on the canvas. "
-                "Unsaved changes will be lost. Continue?",
-                self.window(),
-            )
-            warn.yesButton.setText("Continue")
-            warn.cancelButton.setText("Cancel")
-            if not warn.exec():
-                return
+        if not self._confirm_import(result.pic):
+            return
+        self._pic = result.pic
+        self._stored_id = None
+        self._saved_snapshot = None
+        # Restore metadata only when both fields are present; otherwise the
+        # import is a fresh instance and the fields stay empty.
+        if not result.name and not result.description:
+            self.nameEdit.clear()
+            self.descEdit.clear()
+        else:
+            if result.name:
+                self.nameEdit.setText(result.name)
+            if result.description:
+                self.descEdit.setText(result.description)
+        self._rebuild_canvas()
+        InfoBar.success("Imported", "Painting loaded from code.",
+                        parent=self, duration=2000)
 
-            try:
-                result = decode(code, self._rule)
-                self._pic = result.pic
-                self._stored_id = None
-                self._saved_snapshot = None
-                # Restore metadata if present
-                if result.name:
-                    self.nameEdit.setText(result.name)
-                if result.description:
-                    self.descEdit.setText(result.description)
-            except CodeError as e:
-                InfoBar.error("Import failed", str(e), parent=self, duration=3000)
-                return
+    def _confirm_import(self, pic: ArkPic) -> bool:
+        """Show the import preview dialog; True continues the import."""
+        from src.gui.dialogs.confirm_import_dialog import ConfirmImportDialog
 
-            self._rebuild_canvas()
-            InfoBar.success("Imported", "Painting loaded from code.",
-                            parent=self, duration=2000)
+        return ConfirmImportDialog(
+            pic,
+            "Replace the current canvas with this painting? Unsaved work will be lost.",
+            self.window(),
+        ).exec()
+
+    def _on_import_game_canvas(self) -> None:
+        """Read the current in-game canvas and load it into the editor."""
+        from src.app.device_manager import deviceManager
+        from src.gui.dialogs.device_dialog import browse_and_connect
+
+        device = deviceManager.device
+        if device is None:
+            browse_and_connect(self.window(), on_connected=self._import_canvas_with)
+            return
+        self._import_canvas_with(device)
+
+    def _import_canvas_with(self, device) -> None:
+        """Start the canvas import in a worker thread."""
+        InfoBar.info(
+            "Importing", "Reading the in-game canvas...",
+            parent=self, position=InfoBarPosition.TOP, duration=2000,
+        )
+        self.btnImport.button.setEnabled(False)
+        threading.Thread(target=self._import_canvas_worker, args=(device,), daemon=True).start()
+
+    def _import_canvas_worker(self, device) -> None:
+        from src.auto import Automator
+        from src.core.tasks import GameTaskError, read_game_canvas
+
+        try:
+            automator = Automator(device)
+            pic = read_game_canvas(automator, self._rule)
+            self._canvasImported.emit(pic)
+        except GameTaskError as exc:
+            self._canvasImportFailed.emit(str(exc))
+        except Exception as exc:
+            logger.exception("In-game canvas import failed")
+            self._canvasImportFailed.emit(str(exc))
+
+    @Slot(object)
+    def _apply_imported_canvas(self, pic: ArkPic) -> None:
+        self.btnImport.button.setEnabled(True)
+        if not self._confirm_import(pic):
+            return
+        self._pic = pic
+        self._stored_id = None
+        self._saved_snapshot = None
+        # A canvas read from the game is a fresh instance: clear any metadata.
+        self.nameEdit.clear()
+        self.descEdit.clear()
+        self._rebuild_canvas()
+        InfoBar.success("Imported", "Canvas loaded from the game.",
+                        parent=self, duration=3000)
+
+    @Slot(str)
+    def _show_import_error(self, message: str) -> None:
+        self.btnImport.button.setEnabled(True)
+        InfoBar.error("Import failed", message, parent=self, duration=5000)
 
     def _on_smart_create(self) -> None:
         from src.gui.dialogs.smart_create_dialog import SmartCreateDialog
@@ -451,7 +536,7 @@ class CreatePage(BasePage):
 
     def _start_game_paint(self, device) -> None:
         """Switch to the home page and start the paint task on *device*."""
-        from src.core.game_task import gameTask
+        from src.core.tasks import gameTask
 
         window = self.window()
         window.switchTo(window.homePage)

@@ -6,13 +6,31 @@ import cv2
 import numpy as np
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QImage, QPixmap
-from PySide6.QtWidgets import QHBoxLayout, QLabel
-from qfluentwidgets import BodyLabel, MessageBoxBase, SubtitleLabel, SwitchButton
+from PySide6.QtWidgets import QGridLayout, QLabel
+from qfluentwidgets import (
+    BodyLabel,
+    CaptionLabel,
+    ComboBox,
+    MessageBoxBase,
+    SubtitleLabel,
+    SwitchButton,
+)
 
-from src.core.game_task import CanvasLayout
+from src.core.tasks import CanvasLayout
 
 _DISPLAY_WIDTH = 640
 _BLINK_INTERVAL_MS = 400
+
+#: (label, click delay in ms); the default selection is the Normal entry.
+_SPEED_OPTIONS = (
+    ("Very Fast (17 ms)", 17),
+    ("Fast (34 ms)", 34),
+    ("Normal (67 ms)", 67),
+    ("Slow (100 ms)", 100),
+    ("Very Slow (167 ms)", 167),
+)
+
+_SPEED_WARNING = "Fast drawing speeds may cause missed clicks"
 
 
 def _bgr_to_qpixmap(bgr: np.ndarray) -> QPixmap:
@@ -101,14 +119,31 @@ class RegionVerifyDialog(ImageViewerDialog):
             parent=parent,
         )
 
-        toggle_row = QHBoxLayout()
-        toggle_row.setSpacing(8)
-        toggle_row.addWidget(BodyLabel("Incremental painting"))
+        self.viewLayout.addWidget(CaptionLabel("Drawing Options"))
+
+        # Two-column row: incremental toggle and drawing speed, edge-aligned
         self.incrementalSwitch = SwitchButton()
         self.incrementalSwitch.setChecked(True)
-        toggle_row.addWidget(self.incrementalSwitch)
-        toggle_row.addStretch()
-        self.viewLayout.addLayout(toggle_row)
+        speed_label = BodyLabel("Drawing speed")
+        self.speedCombo = ComboBox()
+        for text, delay_ms in _SPEED_OPTIONS:
+            self.speedCombo.addItem(text, userData=delay_ms)
+        self.speedCombo.setCurrentIndex(
+            next(i for i, (_, delay_ms) in enumerate(_SPEED_OPTIONS) if delay_ms == 67)
+        )
+
+        options_grid = QGridLayout()
+        options_grid.setHorizontalSpacing(8)
+        options_grid.addWidget(BodyLabel("Incremental painting"), 0, 0)
+        options_grid.addWidget(self.incrementalSwitch, 0, 1)
+        options_grid.addWidget(speed_label, 0, 2)
+        options_grid.addWidget(self.speedCombo, 0, 3)
+        options_grid.setColumnStretch(1, 1)
+        options_grid.setColumnStretch(3, 1)
+        self.viewLayout.addLayout(options_grid)
+
+        self.speedWarnLabel = CaptionLabel(_SPEED_WARNING)
+        self.viewLayout.addWidget(self.speedWarnLabel)
 
         self._blink_timer = QTimer(self)
         self._blink_timer.setInterval(_BLINK_INTERVAL_MS)
@@ -119,6 +154,11 @@ class RegionVerifyDialog(ImageViewerDialog):
     def incremental_enabled(self) -> bool:
         """Return whether incremental painting is enabled."""
         return self.incrementalSwitch.isChecked()
+
+    @property
+    def click_delay_ms(self) -> int:
+        """Return the pause between cell clicks, in milliseconds."""
+        return self.speedCombo.currentData()
 
     def _build_marked_pixmap(
         self,

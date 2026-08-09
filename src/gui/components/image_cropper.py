@@ -114,10 +114,10 @@ class ImageCropper(QWidget):
         if not dr.isValid():
             return
         min_size = 20
-        if c.width() < min_size:
-            c.setWidth(min_size)
-        if c.height() < min_size:
-            c.setHeight(min_size)
+        # Size first: keep the minimum, but never exceed the display area.
+        # Otherwise aligning edges below could push the opposite edge out.
+        c.setWidth(min(max(c.width(), min_size), dr.width()))
+        c.setHeight(min(max(c.height(), min_size), dr.height()))
         if c.x() < dr.x():
             c.moveLeft(dr.x())
         if c.y() < dr.y():

@@ -13,6 +13,7 @@ from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtWidgets import (
     QDialog,
     QFileDialog,
+    QGridLayout,
     QHBoxLayout,
     QLabel,
     QVBoxLayout,
@@ -20,7 +21,6 @@ from PySide6.QtWidgets import (
 )
 from qfluentwidgets import (
     BodyLabel,
-    CaptionLabel,
     ComboBox,
     InfoBar,
     InfoBarPosition,
@@ -28,7 +28,6 @@ from qfluentwidgets import (
     PushButton,
     StrongBodyLabel,
     SubtitleLabel,
-    SwitchButton,
     TitleLabel,
 )
 from qfluentwidgets import (
@@ -58,7 +57,6 @@ class SmartCreateDialog(QDialog):
         self._source_bgr: np.ndarray | None = None
         self._cropped_bgr: np.ndarray | None = None
         self._result_pic: ArkPic | None = None
-        self._anti_alias = True
 
         self.setWindowTitle("Smart Create")
         self.setMinimumSize(900, 600)
@@ -119,8 +117,8 @@ class SmartCreateDialog(QDialog):
         ratio_row = QHBoxLayout()
         ratio_row.addWidget(BodyLabel("Aspect:"))
         self.ratioCombo = ComboBox()
-        self.ratioCombo.addItem(f"Rule ({self._rule.width}:{self._rule.height})", "rule")
-        self.ratioCombo.addItem("Free", "free")
+        self.ratioCombo.addItem(f"Rule ({self._rule.width}:{self._rule.height})", userData="rule")
+        self.ratioCombo.addItem("Free", userData="free")
         self.ratioCombo.currentIndexChanged.connect(self._on_ratio_changed)
         ratio_row.addWidget(self.ratioCombo)
         ratio_row.addStretch()
@@ -130,28 +128,39 @@ class SmartCreateDialog(QDialog):
         self.cropper.cropChanged.connect(self._on_crop_changed)
         left.addWidget(self.cropper, 1)
 
-        # Sampling controls
-        mode_row = QHBoxLayout()
-        mode_row.addWidget(BodyLabel("Sampling:"))
-        self.aaSwitch = SwitchButton()
-        self.aaSwitch.setChecked(True)
-        self.aaSwitch.setOnText("Anti-alias")
-        self.aaSwitch.setOffText("Nearest")
-        self.aaSwitch.checkedChanged.connect(self._on_mode_changed)
-        mode_row.addWidget(self.aaSwitch)
-        mode_row.addStretch()
-        left.addLayout(mode_row)
-
         left_col_widget = QWidget()
         left_col_widget.setLayout(left)
         s2.addWidget(left_col_widget, 1)
 
-        # Right column: live preview
+        # Right column: options + live preview
         right = QVBoxLayout()
         right.setSpacing(10)
 
         right.addWidget(StrongBodyLabel("Preview"))
-        right.addWidget(CaptionLabel(f"{self._rule.width}x{self._rule.height} pixels"))
+
+        # Sampling and color matching options, one row of two columns
+        options = QGridLayout()
+        options.setHorizontalSpacing(8)
+        options.addWidget(BodyLabel("Sampling:"), 0, 0)
+        self.samplingCombo = ComboBox()
+        self.samplingCombo.addItem("Nearest", userData="nearest")
+        self.samplingCombo.addItem("Bilinear", userData="bilinear")
+        self.samplingCombo.addItem("Bicubic", userData="bicubic")
+        self.samplingCombo.setCurrentIndex(1)
+        self.samplingCombo.currentIndexChanged.connect(self._on_option_changed)
+        options.addWidget(self.samplingCombo, 0, 1)
+        options.addWidget(BodyLabel("Colors:"), 0, 2)
+        self.colorCombo = ComboBox()
+        self.colorCombo.addItem("RGB Linear", userData="rgb_linear")
+        self.colorCombo.addItem("RGB Squared", userData="rgb_squared")
+        self.colorCombo.addItem("Grayscale", userData="grayscale")
+        self.colorCombo.addItem("Voting", userData="voting")
+        self.colorCombo.setCurrentIndex(1)
+        self.colorCombo.currentIndexChanged.connect(self._on_option_changed)
+        options.addWidget(self.colorCombo, 0, 3)
+        options.setColumnStretch(1, 1)
+        options.setColumnStretch(3, 1)
+        right.addLayout(options)
 
         self.quantPreview = QLabel()
         self.quantPreview.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -275,8 +284,7 @@ class SmartCreateDialog(QDialog):
     def _on_crop_changed(self) -> None:
         self._update_preview()
 
-    def _on_mode_changed(self, checked: bool) -> None:
-        self._anti_alias = checked
+    def _on_option_changed(self) -> None:
         self._update_preview()
 
     def _update_preview(self) -> None:
@@ -297,7 +305,10 @@ class SmartCreateDialog(QDialog):
         if self._cropped_bgr is None:
             return
         self._result_pic = quantize_image(
-            self._cropped_bgr, self._rule, anti_alias=self._anti_alias,
+            self._cropped_bgr,
+            self._rule,
+            sampling=self.samplingCombo.currentData(),
+            color_match=self.colorCombo.currentData(),
         )
         target_pixels = 400
         scale = max(1, target_pixels // max(self._rule.width, self._rule.height))

@@ -20,9 +20,10 @@ ArkPicit 是一个基于 PySide6 的面向《明日方舟》奇象巡展绘画�
 ### 实现的功能
 
 1. **像素画编辑器**：复原了游戏中的像素画编辑器功能。
-2. **从图片智能创建**：从本地文件或剪贴板导入图片，通过交互式裁切和色彩拟合，将图片自动转换为像素画。
+2. **从图片智能创建**：从本地文件或剪贴板导入图片，通过交互式裁切、多种采样方式（最近邻/双线性/双三次）与选色方式（RGB 线性/平方误差、灰阶、多数投票）将图片自动转换为像素画。
 3. **ArkPicCode 分享码**：每幅画作可编码为一段 Base64 文本分享码，在程序内输入分享码即可一键导入他人作品。
 4. **本地画廊管理**：本地保存、浏览和编辑已有画作，支持名称、描述和预览图等显示。
+5. **游戏内自动作画**：连接游戏窗口（Win32）或模拟器（adb）后，自动完成区域校准（滑条预置、锚点识别、网格构建）、画布差异计算与逐色绘制，支持增量模式与绘制速度调节。此外，也支持识别游戏画布当前内容并载入编辑器中，作为新画作继续创作。
 
 ## 使用方法 <sub>Usage</sub>
 
@@ -46,6 +47,7 @@ python main.py
 | :------- | :------------------------------------ |
 | 语言     | Python 3.12                           |
 | GUI 框架 | PySide6 6.11 + pyside6-fluent-widgets |
+| 图像处理 | OpenCV + NumPy                        |
 
 ### 核心数据模型
 
@@ -92,17 +94,20 @@ ArkPicCode 是一种 URL Safe Base64 文本编码，用于分享画作。原始�
 
 ```
 Ark-Picit/
-├── main.py    # 应用入口
+├── main.py       # 应用入口
+├── assets/       # 自动化模板图像（720p 归一化空间）
 ├── src/
-│   ├── app/   # 主窗口、配置、信号总线
-│   ├── core/  # ArkPic 数据模型、ArkPicCode 编解码、存储
-│   └── gui/   # GUI 页面、控件、对话框
-└── gallery/   # 用户画作存储 (运行时生成)
+│   ├── app/      # 主窗口、设备管理、信号总线
+│   ├── auto/     # 自动化：设备抽象（Win32/adb）、模板/颜色匹配、Automator 门面
+│   ├── core/     # 数据模型、ArkPicCode 编解码、量化、存储、游戏内任务（tasks/）
+│   ├── gui/      # GUI 页面、控件、对话框
+│   └── utils/    # 路径等工具
+└── gallery/      # 用户画作存储 (运行时生成)
 ```
 
 ### 自动绘图流程
 
-「自动作画」功能通过 `src/auto` 自动化包驱动游戏窗口完成游戏内像素画绘制。整体流程拆分为两个阶段：区域校准与验证、自动绘制。
+「自动作画」功能通过 `src/auto` 自动化包驱动游戏窗口完成游戏内像素画绘制。整体流程拆分为两个阶段：区域校准与验证、自动绘制。区域校准与画布内容读取（`src/core/tasks`）同时被「从游戏画布导入」功能复用。
 
 **图 1：区域校准与验证**
 
@@ -114,9 +119,9 @@ flowchart TD
     C -- "Yes" --> D["Match scale slider<br/>drag it to the bottom"]
     D --> E["Match LT / RB canvas anchors"]
     E --> F["Build canvas grid (rows x cols)<br/>and palette region"]
-    F --> G["Read canvas current content"]
+    F --> G["Read canvas content<br/>quantize by majority voting"]
     G --> H["Compute diff cells vs the painting"]
-    H --> I["Show verification dialog"]
+    H --> I["Show verification dialog<br/>incremental toggle, drawing speed"]
     I --> J{"User choice"}
     J -- "Cancel" --> Z([End])
     J -- "Start Drawing" --> X(["Continue: drawing flow"])
@@ -159,6 +164,8 @@ flowchart TD
 4. **Win32 截图纪律**：Win32 以非管理员模式运行程序时，后台模式下 `PrintWindow` 可能会返回全黑画面，会自动回退到 `BitBlt` 截屏。尽量确保程序是以管理员方式运行。
 
 5. **随机化纪律**：自动化流程中唯一允许的随机化是 `random_ratio`（中心 p% 区域均匀随机），仅用于 `click_region`/`click_match`/`click_template`；滑条与色板的拖动采用点对点精确，不引入任何随机。
+
+6. **画布读取的投票量化**：从游戏画布读取内容（绘制前的差异计算、画布导入）使用投票降采样：每个目标格统计源区域内出现次数最多的精确像素颜色，平票时取众数颜色的算术平均。格子边框与水印文本因此被自然压制，无需容差参数。
 
 ## 许可证 <sub>Licensing</sub>
 
