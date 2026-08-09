@@ -53,6 +53,7 @@ class CreatePage(BasePage):
         self.btnExport = PushButton(FIF.SHARE, "Export Code")
         self.btnImport = PushButton(FIF.FOLDER, "Import Code")
         self.btnSmart = PrimaryPushButton(FIF.PHOTO, "Smart Create")
+        self.btnGamePaint = PrimaryPushButton(FIF.BRUSH, "Auto Paint in Game")
         actions.addWidget(self.btnNew)
         actions.addWidget(self.btnSmart)
         actions.addWidget(self.btnSave)
@@ -60,6 +61,7 @@ class CreatePage(BasePage):
         actions.addWidget(self.btnExport)
         actions.addWidget(self.btnImport)
         actions.addStretch()
+        actions.addWidget(self.btnGamePaint)
         self.viewLayout.addLayout(actions)
 
         # --- Form (Name/Description, grid-aligned) ---
@@ -169,6 +171,7 @@ class CreatePage(BasePage):
         self.btnExport.clicked.connect(self._on_export_code)
         self.btnImport.clicked.connect(self._on_import_code)
         self.btnSmart.clicked.connect(self._on_smart_create)
+        self.btnGamePaint.clicked.connect(self._on_game_paint)
         self.toolPaint.clicked.connect(self._on_tool_paint)
         self.toolFill.clicked.connect(self._on_tool_fill)
         self.toolUndo.clicked.connect(self._on_undo)
@@ -195,7 +198,6 @@ class CreatePage(BasePage):
                 item.widget().deleteLater()
 
         self._canvas = PixelCanvas(self._pic)
-        self._canvas.contentChanged.connect(self._on_content_changed)
         self._canvas.undoAvailabilityChanged.connect(self.toolUndo.setEnabled)
         self._canvas.redoAvailabilityChanged.connect(self.toolRedo.setEnabled)
         self.canvasHolder.addWidget(self._canvas)
@@ -252,9 +254,6 @@ class CreatePage(BasePage):
             self._rebuild_canvas()
             self._rebuild_palette()
             self._on_color_selected(self._rule.default_color_id)
-
-    def _on_content_changed(self) -> None:
-        pass
 
     def _on_color_selected(self, cid: int) -> None:
         if self._canvas:
@@ -403,3 +402,27 @@ class CreatePage(BasePage):
                     "Pixel art generated. Adjust as needed, then Save.",
                     parent=self, position=InfoBarPosition.TOP, duration=3000,
                 )
+
+    def _on_game_paint(self) -> None:
+        """Start the in-game auto painting task and switch to the home page.
+
+        When no device is connected, the browse dialog opens first so the
+        user can connect one; the task starts automatically after the
+        connection succeeds. The task status is displayed on the home page.
+        """
+        from src.app.device_manager import deviceManager
+        from src.gui.dialogs.device_dialog import browse_and_connect
+
+        device = deviceManager.device
+        if device is None:
+            browse_and_connect(self.window(), on_connected=self._start_game_paint)
+            return
+        self._start_game_paint(device)
+
+    def _start_game_paint(self, device) -> None:
+        """Switch to the home page and start the paint task on *device*."""
+        from src.core.game_task import gameTask
+
+        window = self.window()
+        window.switchTo(window.homePage)
+        gameTask.start(device, self._rule, self._pic)

@@ -100,6 +100,66 @@ Ark-Picit/
 └── gallery/   # 用户画作存储 (运行时生成)
 ```
 
+### 自动绘图流程
+
+「自动作画」功能通过 `src/auto` 自动化包驱动游戏窗口完成游戏内像素画绘制。整体流程拆分为两个阶段：区域校准与验证、自动绘制。
+
+**图 1：区域校准与验证**
+
+```mermaid
+flowchart TD
+    A([Start]) --> B["Detect canvas page<br/>in game window"]
+    B --> C{"Is in canvas page?"}
+    C -- "No" --> ERR1["Abort: not in canvas page<br/>save error screenshot"]
+    C -- "Yes" --> D["Match scale slider<br/>drag it to the bottom"]
+    D --> E["Match LT / RB canvas anchors"]
+    E --> F["Build canvas grid (rows x cols)<br/>and palette region"]
+    F --> G["Read canvas current content"]
+    G --> H["Compute diff cells vs the painting"]
+    H --> I["Show verification dialog"]
+    I --> J{"User choice"}
+    J -- "Cancel" --> Z([End])
+    J -- "Start Drawing" --> X(["Continue: drawing flow"])
+    ERR1 --> Z
+```
+
+**图 2：自动绘制**
+
+```mermaid
+flowchart TD
+    A([Start Drawing]) --> B{"Incremental mode<br/>and no diff?"}
+    B -- "Yes" --> M1["Success: canvas already matches<br/>skip painting"]
+    B -- "No" --> C["For each used color (lowest ID first)"]
+    C --> D["Find color swatch<br/>in the palette ROI"]
+    D --> E{"Found?"}
+    E -- "No" --> F1["Scroll palette up, retry"]
+    F1 --> F2{"Found?"}
+    F2 -- "No" --> F3["Scroll palette down, retry"]
+    F3 --> F4{"Found?"}
+    F4 -- "No" --> ERR2["Abort: color not found<br/>save error screenshot"]
+    E -- "Yes" --> G["Click the swatch"]
+    F2 -- "Yes" --> G
+    F4 -- "Yes" --> G
+    G --> H["Click every cell of this color<br/>in the canvas<br/>(incremental: only diff cells)"]
+    H --> I{"More colors?"}
+    I -- "Yes" --> C
+    I -- "No" --> Z
+    M1 --> Z([End])
+    ERR2 --> Z
+```
+
+### 实现细节注意事项
+
+1. **模板缩放约定**：模板按固定短边（720p）采集，属于归一化空间资产，运行时永不缩放模板；匹配时把设备截图缩放到归一化空间再原样匹配。
+
+2. **模板匹配的方差陷阱**：`cv2.matchTemplate`（TM_CCOEFF_NORMED）对纯色零方差输入是未定义行为，会返回假阳性，因此须对模板做标准差守卫并对分数做有限性检查。纯色色块（如色板取色）不能走模板匹配，应使用颜色敏感匹配。
+
+3. **Win32 光标纪律**：仅在 Win32 控制器中，游戏通常会读取 `GetCursorPos`，因此每次点击/拖动前必须把真实光标精确移动到目标像素；截图前把光标停在窗口客户区右下角并等待一小段时间，防止鼠标光标污染画面。瞬时点击会被部分情景漏检，需通过 `hold_ms` 参数保持按压。
+
+4. **Win32 截图纪律**：Win32 以非管理员模式运行程序时，后台模式下 `PrintWindow` 可能会返回全黑画面，会自动回退到 `BitBlt` 截屏。尽量确保程序是以管理员方式运行。
+
+5. **随机化纪律**：自动化流程中唯一允许的随机化是 `random_ratio`（中心 p% 区域均匀随机），仅用于 `click_region`/`click_match`/`click_template`；滑条与色板的拖动采用点对点精确，不引入任何随机。
+
 ## 许可证 <sub>Licensing</sub>
 
 本项目基于 **BSD-3 开源协议**。任何人都可以自由地使用和修改项目内的源代码，前提是要在源代码或版权声明中保留作者说明和原有协议，且不可以使用本项目名称或作者名称进行宣传推广。

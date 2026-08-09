@@ -3,7 +3,6 @@
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import FluentWindow, NavigationItemPosition
 
-from src.app.config import cfg
 from src.app.signal_bus import signalBus
 from src.gui.pages.create_page import CreatePage
 from src.gui.pages.gallery_page import GalleryPage
