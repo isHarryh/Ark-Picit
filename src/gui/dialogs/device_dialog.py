@@ -1,14 +1,24 @@
 """Dialog for browsing and selecting a device to connect.
 
-Windows whose titles mention the game are listed in a "Recommended Windows"
-group at the top, followed by "Other Windows" and "ADB Devices".
+The dialog opens immediately with a loading state; discovered candidates
+populate it asynchronously. ADB devices are listed in an "ADB Devices"
+group at the top, followed by "Recommended Windows" and "Other Windows".
+Empty groups show an empty-state hint instead of being removed.
 """
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
-from PySide6.QtWidgets import QListWidgetItem, QWidget
+from PySide6.QtCore import QRectF, Qt
+from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPen, QPixmap
+from PySide6.QtWidgets import QHBoxLayout, QListWidgetItem, QStackedWidget, QVBoxLayout, QWidget
 from qfluentwidgets import FluentIcon as FIF
-from qfluentwidgets import InfoBar, ListWidget, MessageBoxBase, SubtitleLabel
+from qfluentwidgets import (
+    CaptionLabel,
+    IndeterminateProgressBar,
+    InfoBar,
+    ListWidget,
+    MessageBoxBase,
+    SubtitleLabel,
+    isDarkTheme,
+)
 
 from src.app.device_manager import DeviceCandidate, deviceManager
 from src.auto import DeviceKind
@@ -16,6 +26,27 @@ from src.auto import DeviceKind
 _browsing = False
 
 RECOMMENDED_KEYWORDS = ("明日方舟", "arknights")
+
+_EMPTY_ADB = "No adb devices found. Start an emulator first."
+_EMPTY_RECOMMENDED = "No game window found. Start the game first."
+_EMPTY_OTHERS = "No other windows found."
+
+
+def _smartphone_icon() -> QIcon:
+    """Return a theme-aware smartphone icon drawn with QPainter."""
+    color = QColor(255, 255, 255) if isDarkTheme() else QColor(0, 0, 0)
+    pixmap = QPixmap(32, 32)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    painter.setPen(QPen(color, 2))
+    painter.setBrush(Qt.BrushStyle.NoBrush)
+    painter.drawRoundedRect(QRectF(9.5, 3.5, 13, 25), 3, 3)
+    painter.setPen(Qt.PenStyle.NoPen)
+    painter.setBrush(color)
+    painter.drawRoundedRect(QRectF(12.5, 7.5, 7, 16), 1.5, 1.5)
+    painter.end()
+    return QIcon(pixmap)
 
 
 def _is_recommended(candidate: DeviceCandidate) -> bool:
@@ -30,49 +61,100 @@ class DeviceDialog(MessageBoxBase):
     """List discovered devices; the selected candidate is returned on accept.
 
     Args:
-        candidates: Discovered device candidates to display.
+        candidates: Discovered device candidates to display, or None to show
+            a loading state until :meth:`set_candidates` is called.
         parent: Parent widget.
     """
 
-    def __init__(self, candidates: list[DeviceCandidate], parent=None):
+    def __init__(self, candidates: list[DeviceCandidate] | None = None, parent=None):
         super().__init__(parent)
         self.widget.setMinimumWidth(460)
         self.viewLayout.setSpacing(12)
         self.viewLayout.addWidget(SubtitleLabel("Select a controller to connect"))
 
+        # List and loading state share the same area, so switching between
+        # them does not reflow the dialog layout.
+        self._stack = QStackedWidget(self)
         self.listWidget = ListWidget(self)
         self.listWidget.setMinimumHeight(260)
-        self._populate(candidates)
-        self.viewLayout.addWidget(self.listWidget)
+        self._stack.addWidget(self.listWidget)
+
+        self._progress = IndeterminateProgressBar(self)
+        self._progress.setFixedWidth(220)
+        self._hint = CaptionLabel("Searching for controllers...", self)
+        self._hint.setWordWrap(True)
+        loading_row = QHBoxLayout()
+        loading_row.addStretch()
+        loading_row.addWidget(self._hint)
+        loading_row.addSpacing(12)
+        loading_row.addWidget(self._progress)
+        loading_row.addStretch()
+        self._loadingPage = QWidget(self)
+        self._loadingPage.setMinimumHeight(260)
+        loading_vbox = QVBoxLayout(self._loadingPage)
+        loading_vbox.addStretch(1)
+        loading_vbox.addLayout(loading_row)
+        loading_vbox.addStretch(1)
+        self._stack.addWidget(self._loadingPage)
+
+        self.viewLayout.addWidget(self._stack)
 
         self.yesButton.setText("Connect")
         self.cancelButton.setText("Cancel")
         self.listWidget.itemDoubleClicked.connect(lambda _item: self.accept())
 
+        if candidates is None:
+            self._stack.setCurrentWidget(self._loadingPage)
+            self._progress.start()
+        else:
+            self.set_candidates(candidates)
+
+    def set_candidates(self, candidates: list[DeviceCandidate]) -> None:
+        """Populate the list with discovered candidates, replacing the loading state."""
+        self._stack.setCurrentWidget(self.listWidget)
+        self._progress.stop()
+        self._populate(candidates)
+
+    def set_error(self, message: str) -> None:
+        """Replace the loading state with a discovery error message."""
+        self._progress.stop()
+        self._hint.setText(message)
+        self._hint.setStyleSheet("color: #c0392b;")
+
+    def validate(self) -> bool:
+        """Only accept the dialog when a device candidate is selected."""
+        return self.selected_candidate is not None
+
     def _populate(self, candidates: list[DeviceCandidate]) -> None:
-        windows = [c for c in candidates if c.kind is DeviceKind.WIN32]
         adbs = [c for c in candidates if c.kind is DeviceKind.ADB]
+        windows = [c for c in candidates if c.kind is DeviceKind.WIN32]
         recommended = [c for c in windows if _is_recommended(c)]
         others = [c for c in windows if not _is_recommended(c)]
 
-        if recommended:
-            self._add_group_header("Recommended Windows")
-            for candidate in recommended:
-                self._add_candidate(candidate)
-        if others:
-            self._add_group_header("Other Windows")
-            for candidate in others:
-                self._add_candidate(candidate)
-        if adbs:
-            self._add_group_header("ADB Devices")
-            for candidate in adbs:
-                self._add_candidate(candidate)
+        self._add_group("ADB Devices", adbs, _EMPTY_ADB)
+        self._add_group("Recommended Windows", recommended, _EMPTY_RECOMMENDED)
+        self._add_group("Other Windows", others, _EMPTY_OTHERS)
 
         for row in range(self.listWidget.count()):
             item = self.listWidget.item(row)
             if item.data(Qt.ItemDataRole.UserRole) is not None:
                 self.listWidget.setCurrentRow(row)
                 break
+
+    def _add_group(
+        self,
+        title: str,
+        candidates: list[DeviceCandidate],
+        empty_text: str,
+    ) -> None:
+        self._add_group_header(title)
+        if not candidates:
+            item = QListWidgetItem(empty_text)
+            item.setFlags(Qt.ItemFlag.NoItemFlags)
+            self.listWidget.addItem(item)
+            return
+        for candidate in candidates:
+            self._add_candidate(candidate)
 
     def _add_group_header(self, text: str) -> None:
         item = QListWidgetItem(text)
@@ -83,8 +165,8 @@ class DeviceDialog(MessageBoxBase):
         self.listWidget.addItem(item)
 
     def _add_candidate(self, candidate: DeviceCandidate) -> None:
-        icon = FIF.PHONE if candidate.kind is DeviceKind.ADB else FIF.EMBED
-        item = QListWidgetItem(icon.icon(), candidate.label)
+        icon = _smartphone_icon() if candidate.kind is DeviceKind.ADB else FIF.EMBED.icon()
+        item = QListWidgetItem(icon, candidate.label)
         item.setData(Qt.ItemDataRole.UserRole, candidate)
         self.listWidget.addItem(item)
 
@@ -98,41 +180,40 @@ class DeviceDialog(MessageBoxBase):
 
 
 def browse_and_connect(parent: QWidget, on_connected=None) -> None:
-    """Discover devices, show the browse dialog, and connect the selection.
+    """Open the browse dialog immediately and populate it as discovery finishes.
 
-    A fresh discovery runs every time this is invoked, so no separate
-    refresh control is needed. Notifications (nothing found / connection
-    result) are shown as InfoBars on *parent*. *on_connected* is invoked
-    with the connected device after a successful connection.
+    The dialog starts in a loading state; discovered candidates are shown
+    as soon as the (slow) window/adb scan completes. Notifications
+    (connection result or failure) are shown as InfoBars on *parent*.
+    *on_connected* is invoked with the connected device after a successful
+    connection.
     """
     global _browsing
     if _browsing:
         return
     _browsing = True
 
+    dialog = DeviceDialog(candidates=None, parent=parent)
+
     def _cleanup() -> None:
         global _browsing
         _browsing = False
         deviceManager.discoveryFinished.disconnect(_on_discovered)
+        deviceManager.discoveryFailed.disconnect(_on_discovery_failed)
         deviceManager.deviceConnected.disconnect(_on_connected)
         deviceManager.deviceConnectionFailed.disconnect(_on_failed)
 
     def _on_discovered(candidates: list[DeviceCandidate]) -> None:
-        if not candidates:
-            _cleanup()
-            InfoBar.warning(
-                "No controllers found",
-                "No windows or adb devices are available. Start the game or an emulator, then try again.",
-                parent=parent,
-                duration=5000,
-            )
-            return
-        dialog = DeviceDialog(candidates, parent)
-        candidate = dialog.selected_candidate if dialog.exec() else None
-        if candidate is None:
+        if dialog.isHidden():
             _cleanup()
             return
-        deviceManager.connect(candidate)
+        dialog.set_candidates(candidates)
+
+    def _on_discovery_failed(message: str) -> None:
+        if dialog.isHidden():
+            _cleanup()
+            return
+        dialog.set_error(message)
 
     def _on_connected(device) -> None:
         _cleanup()
@@ -148,9 +229,22 @@ def browse_and_connect(parent: QWidget, on_connected=None) -> None:
 
     def _on_failed(message: str) -> None:
         _cleanup()
-        InfoBar.error("Connection failed", message, parent=parent, duration=5000)
+        if "unauthorized" in message:
+            message = (
+                f"{message}. Accept the debugging authorization prompt on the device "
+                "or in the emulator, then try again."
+            )
+        InfoBar.error("Connection failed", message, parent=parent, duration=6000)
 
     deviceManager.discoveryFinished.connect(_on_discovered)
+    deviceManager.discoveryFailed.connect(_on_discovery_failed)
     deviceManager.deviceConnected.connect(_on_connected)
     deviceManager.deviceConnectionFailed.connect(_on_failed)
     deviceManager.discover()
+
+    accepted = dialog.exec()
+    candidate = dialog.selected_candidate if accepted else None
+    if candidate is None:
+        _cleanup()
+        return
+    deviceManager.connect(candidate)

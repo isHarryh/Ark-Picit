@@ -110,23 +110,20 @@ def _click_palette_color(
 
     Raises GameTaskError when the color cannot be found after both scrolls.
     """
-    # Each iteration retries after one palette scroll; None checks the
-    # palette as-is before any scrolling.
-    scrolls = (
-        (None, ""),
+    match = _find_palette_color(automator, layout, color_bgr)
+    if match is not None:
+        return match
+    for down, message in (
         (False, "Palette color not visible, scrolling up..."),
         (True, "Palette color still not visible, scrolling back down..."),
-    )
-    for down, message in scrolls:
-        match = _find_palette_color(automator, layout, color_bgr)
-        if match is not None:
-            return match
-        if down is None:
-            continue
+    ):
         notify(message)
         start, end = _palette_drag_points(layout, down=down)
         automator.drag_point(start, end, duration_ms=PALETTE_DRAG_DURATION_MS)
         _settle_palette(automator, layout)
+        match = _find_palette_color(automator, layout, color_bgr)
+        if match is not None:
+            return match
     raise GameTaskError(
         f"Color not found in palette: #{rgb_to_hex(color_bgr[2], color_bgr[1], color_bgr[0])}"
     )

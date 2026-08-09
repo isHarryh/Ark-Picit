@@ -26,6 +26,7 @@ from src.auto.base import (
     Region,
 )
 from src.auto.vision import load_template, match_color, match_template
+from src.utils.paths import ASSETS_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +101,22 @@ class Automator:
     def screen_size(self) -> tuple[int, int]:
         """Return the (width, height) of the normalized coordinate space."""
         return self._scale.normalized_size
+
+    @property
+    def template_dir(self) -> Path:
+        """Return the template directory matching the current device kind.
+
+        Templates are authored per normalized-space variant: the Win32
+        window uses the 720p short-side set, adb emulators use the 240dpi
+        set. Template selection therefore follows the connected device
+        automatically.
+        """
+        subdir = "adb240dpi" if self.kind is DeviceKind.ADB else "win720p"
+        return ASSETS_DIR / "images" / subdir
+
+    def template(self, name: str) -> Path:
+        """Return the device-specific path of a named template file."""
+        return self.template_dir / name
 
     # ------------------------------------------------------------------
     # Atomic operations

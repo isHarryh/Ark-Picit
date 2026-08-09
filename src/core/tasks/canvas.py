@@ -8,27 +8,18 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 
 from src.auto import Automator
 from src.auto.base import MatchResult, Point, Region
 from src.core.pic import ArkPic
 from src.core.quantize import quantize_image
 from src.core.rule import ArkPicRule
-from src.utils.paths import ASSETS_DIR
 
-# Templates are captured at 720p short side (see assets/images/win720p).
-_TEMPLATE_DIR = ASSETS_DIR / "images" / "win720p"
-
-TEMPLATE_IN_CANVAS_1 = _TEMPLATE_DIR / "InCanvasPage1.png"
-TEMPLATE_IN_CANVAS_2 = _TEMPLATE_DIR / "InCanvasPage2.png"
-TEMPLATE_SLIDER = _TEMPLATE_DIR / "CanvasScaleSlider.png"
-TEMPLATE_ANCHOR_LT = _TEMPLATE_DIR / "CanvasAnchorLT.png"
-TEMPLATE_ANCHOR_RB = _TEMPLATE_DIR / "CanvasAnchorRB.png"
-
-ROI_IN_CANVAS_1 = Region(30, 60, 150, 150)
-ROI_IN_CANVAS_2 = Region(860, 160, 150, 150)
+ROI_IN_CANVAS_1 = Region(10, 60, 180, 150)
+ROI_IN_CANVAS_2 = Region(860, 160, 200, 150)
 ROI_SLIDER = Region(30, 210, 290, 500)
-ROI_ANCHOR_LT = Region(230, 90, 150, 120)
+ROI_ANCHOR_LT = Region(200, 60, 180, 150)
 ROI_ANCHOR_RB = Region(790, 600, 150, 120)
 MATCH_THRESHOLD = 0.8
 
@@ -38,6 +29,33 @@ SETTLE_QUIET_MS = 250
 SETTLE_TIMEOUT_MS = 5000
 
 PALETTE_CELL_SPAN = 13  # palette width in canvas cell units
+
+
+@dataclass(frozen=True, slots=True)
+class GameTemplates:
+    """Device-specific template files used during canvas calibration.
+
+    File names are shared across device variants; the directory is picked
+    from the automator's device kind (see :meth:`Automator.template_dir`).
+    """
+
+    in_canvas_1: Path
+    in_canvas_2: Path
+    slider: Path
+    anchor_lt: Path
+    anchor_rb: Path
+
+    @staticmethod
+    def for_automator(automator: Automator) -> GameTemplates:
+        """Return the template set matching *automator*'s device kind."""
+        base = automator.template_dir
+        return GameTemplates(
+            in_canvas_1=base / "InCanvasPage1.png",
+            in_canvas_2=base / "InCanvasPage2.png",
+            slider=base / "CanvasScaleSlider.png",
+            anchor_lt=base / "CanvasAnchorLT.png",
+            anchor_rb=base / "CanvasAnchorRB.png",
+        )
 
 
 class GameTaskError(Exception):
@@ -92,18 +110,19 @@ def calibrate_canvas_layout(
     Any failed template match raises :class:`GameTaskError`.
     """
     notify = report or _noop
+    templates = GameTemplates.for_automator(automator)
     notify("Checking canvas page...")
     in_canvas_1 = automator.find_template(
-        TEMPLATE_IN_CANVAS_1, ROI_IN_CANVAS_1, threshold=MATCH_THRESHOLD
+        templates.in_canvas_1, ROI_IN_CANVAS_1, threshold=MATCH_THRESHOLD
     )
     in_canvas_2 = automator.find_template(
-        TEMPLATE_IN_CANVAS_2, ROI_IN_CANVAS_2, threshold=MATCH_THRESHOLD
+        templates.in_canvas_2, ROI_IN_CANVAS_2, threshold=MATCH_THRESHOLD
     )
     if in_canvas_1 is None or in_canvas_2 is None:
         raise GameTaskError("Not in the canvas page (In Canvas icons not found)")
 
     notify("Adjusting canvas zoom...")
-    slider = automator.find_template(TEMPLATE_SLIDER, ROI_SLIDER, threshold=MATCH_THRESHOLD)
+    slider = automator.find_template(templates.slider, ROI_SLIDER, threshold=MATCH_THRESHOLD)
     if slider is None:
         raise GameTaskError("Canvas scale slider not found")
     screen_width, screen_height = automator.screen_size
@@ -117,8 +136,8 @@ def calibrate_canvas_layout(
     )
 
     notify("Locating canvas and palette...")
-    anchor_lt = automator.find_template(TEMPLATE_ANCHOR_LT, ROI_ANCHOR_LT, threshold=MATCH_THRESHOLD)
-    anchor_rb = automator.find_template(TEMPLATE_ANCHOR_RB, ROI_ANCHOR_RB, threshold=MATCH_THRESHOLD)
+    anchor_lt = automator.find_template(templates.anchor_lt, ROI_ANCHOR_LT, threshold=MATCH_THRESHOLD)
+    anchor_rb = automator.find_template(templates.anchor_rb, ROI_ANCHOR_RB, threshold=MATCH_THRESHOLD)
     if anchor_lt is None or anchor_rb is None:
         raise GameTaskError("Canvas anchors not found")
     return _build_layout(

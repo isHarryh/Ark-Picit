@@ -167,6 +167,8 @@ flowchart TD
 
 6. **画布读取的投票量化**：从游戏画布读取内容（绘制前的差异计算、画布导入）使用投票降采样：每个目标格统计源区域内出现次数最多的精确像素颜色，平票时取众数颜色的算术平均。格子边框与水印文本因此被自然压制，无需容差参数。
 
+7. **ADB 自动发现**：当 `adb` 不在 PATH 时，通过枚举运行中的模拟器进程（MuMu/雷电/夜神/BlueStacks/MEmu/AVD）并从进程目录解析其自带的 adb 可执行文件，PATH 仅作最后兜底。此功能借鉴了 [MaaAssistantArknights](https://github.com/MaaAssistantArknights/MaaAssistantArknights)（AGPL-3.0）与 [MaaFramework](https://github.com/MaaAssistantArknights/MaaFramework)（LGPL-3.0）的模拟器发现逻辑。
+
 ## 许可证 <sub>Licensing</sub>
 
 本项目基于 **BSD-3 开源协议**。任何人都可以自由地使用和修改项目内的源代码，前提是要在源代码或版权声明中保留作者说明和原有协议，且不可以使用本项目名称或作者名称进行宣传推广。

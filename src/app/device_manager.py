@@ -12,9 +12,12 @@ from src.auto import (
     AdbDevice,
     Device,
     DeviceKind,
+    DeviceNotFoundError,
     Win32Device,
+    find_adb_executable,
     list_devices,
     list_windows,
+    probe_emulators,
 )
 
 logger = logging.getLogger(__name__)
@@ -42,12 +45,18 @@ def _discover_all(adb_path: str) -> list[DeviceCandidate]:
                 params={"title_regex": window.title, "class_regex": window.class_name},
             )
         )
-    for serial in list_devices(adb_path):
+    # Emulators only appear in `adb devices` after an explicit connect, so
+    # probe the well-known local ports first, then list the actual states.
+    probe_emulators(adb_path)
+    for info in list_devices(adb_path):
+        label = f"{info.serial} (adb)"
+        if info.state != "device":
+            label += f" [{info.state}]"
         candidates.append(
             DeviceCandidate(
                 kind=DeviceKind.ADB,
-                label=f"{serial} (adb)",
-                params={"serial": serial},
+                label=label,
+                params={"serial": info.serial, "adb_path": adb_path},
             )
         )
     return candidates
@@ -65,6 +74,7 @@ class DeviceManager(QObject):
     """Holds the current device and performs discovery/connection in worker threads."""
 
     discoveryFinished = Signal(list)  # list[DeviceCandidate]
+    discoveryFailed = Signal(str)  # error message
     deviceConnected = Signal(object)  # Device
     deviceConnectionFailed = Signal(str)  # error message
 
@@ -73,7 +83,11 @@ class DeviceManager(QObject):
         self._candidates: list[DeviceCandidate] = []
         self._device: Device | None = None
         self._candidate: DeviceCandidate | None = None
-        self._adb_path = "adb"
+        # Auto-discovery: a running emulator's adb is preferred over PATH,
+        # so users without adb in PATH can still connect.
+        self._adb_path = find_adb_executable() or "adb"
+        if self._adb_path == "adb":
+            logger.warning("adb not found; device discovery will fail until adb is available")
 
     # ------------------------------------------------------------------
     # State
@@ -103,11 +117,20 @@ class DeviceManager(QObject):
     # ------------------------------------------------------------------
 
     def discover(self) -> None:
-        """Scan for connectable devices in a worker thread; emit discoveryFinished."""
+        """Scan for connectable devices in a worker thread; emit discoveryFinished.
+
+        The adb executable is re-discovered on every scan so that an
+        emulator started after launch is picked up.
+        """
 
         def _work() -> None:
+            self._adb_path = find_adb_executable() or "adb"
             try:
                 found = _discover_all(self._adb_path)
+            except DeviceNotFoundError as exc:
+                logger.warning("Device discovery failed: %s", exc)
+                self.discoveryFailed.emit(str(exc))
+                found = []
             except Exception as exc:
                 logger.warning("Device discovery failed: %s", exc)
                 found = []
