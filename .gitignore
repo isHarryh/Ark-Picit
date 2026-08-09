@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# IDE
+.idea/
+.ruff_cache/
+
+# Runtime data (generated, not tracked)
+config/
+cache/
+gallery/
+screenshots/
+
+# Logs
+*.log
