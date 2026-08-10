@@ -21,7 +21,7 @@ def _pic_to_pixmap(pic: ArkPic) -> QPixmap:
     height, width, _ = rgb.shape
     image = QImage(rgb.data, width, height, width * 3, QImage.Format.Format_RGB888).copy()
     pixmap = QPixmap.fromImage(image)
-    return pixmap.scaledToWidth(_DISPLAY_WIDTH, Qt.TransformationMode.SmoothTransformation)
+    return pixmap.scaledToWidth(_DISPLAY_WIDTH, Qt.TransformationMode.FastTransformation)
 
 
 class ConfirmImportDialog(MessageBoxBase):

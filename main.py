@@ -1,94 +1,43 @@
-"""Ark Picit — application entry point.
+"""Ark Picit — unified entry point.
 
-Run with:  python main.py
+Run the GUI client by default, or start the plaza server with --server.
+Server settings (port, admin token, upload status) come from ``config.toml``
+in the server data directory, not from the command line.
+
+    python main.py          # GUI client
+    python main.py --server # plaza server
 """
 
+import argparse
 import sys
-from contextlib import ContextDecorator
 from pathlib import Path
 
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QApplication
-
-# Ensure src/ is importable when running from project root
-sys.path.insert(0, str(Path(__file__).parent))
+ROOT = Path(__file__).resolve().parent
 
 
-class _BlackHoleStream:
-    def __init__(self, stream):
-        self._stream = stream
-
-    def write(self, text):
-        return len(text)
-
-    def flush(self):
-        self._stream.flush()
-
-    def isatty(self):
-        return self._stream.isatty()
-
-
-class _MutedStdout(ContextDecorator):
-    def __enter__(self):
-        self._original = sys.stdout
-        sys.stdout = _BlackHoleStream(self._original)
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        sys.stdout = self._original
-        return False
-
-with _MutedStdout():
-    from qfluentwidgets import FluentTranslator, setTheme
-
-
-def main():
-    # High-DPI (Qt6 handles this automatically, but we set the rounding policy)
-    QApplication.setHighDpiScaleFactorRoundingPolicy(
-        Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Ark Picit")
+    parser.add_argument(
+        "--server",
+        action="store_true",
+        help="start the plaza server instead of the GUI client",
     )
+    return parser
 
-    app = QApplication(sys.argv)
-    app.setApplicationName("Ark Picit")
-    app.setApplicationDisplayName("Ark Picit")
 
-    # Ensure the app font carries a valid point size
-    font = app.font()
-    if font.pointSize() < 1:
-        font.setPointSize(9)
-        app.setFont(font)
+def main() -> None:
+    args = _build_parser().parse_args()
 
-    # Localization
-    from src.utils.paths import CONFIG_DIR, GALLERY_DIR, ensure_runtime_dirs
-    ensure_runtime_dirs()
-    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    if args.server:
+        from server.src.main import run_server
 
-    # Gallery storage
-    from src.core import storage
-    storage.set_gallery_dir(GALLERY_DIR)
+        run_server()
+        return
 
-    # Config
-    from src.app.config import init_config
-    config_path = CONFIG_DIR / "config.json"
-    init_config(config_path)
+    sys.path.insert(0, str(ROOT / "client"))
+    from client.main import run_client
 
-    # Fluent translator
-    fluent_translator = FluentTranslator()
-    app.installTranslator(fluent_translator)
-
-    # Theme
-    from qfluentwidgets import qconfig
-
-    from src.app.config import cfg
-    theme_val = qconfig.get(cfg().themeMode)
-    setTheme(theme_val)
-
-    # Main window
-    from src.app.main_window import MainWindow
-    window = MainWindow()
-    window.show()
-
-    sys.exit(app.exec())
+    run_client()
 
 
 if __name__ == "__main__":

@@ -198,6 +198,7 @@ class CreatePage(BasePage):
 
         signalBus.newPainting.connect(self._new_painting)
         signalBus.editPainting.connect(self._load_by_id)
+        signalBus.importCode.connect(self._import_code_text)
 
     def _setup_save_menu(self) -> None:
         """Attach the Save As action to the Save button's drop-down menu."""
@@ -411,7 +412,10 @@ class CreatePage(BasePage):
         code = dialog.get_text().strip()
         if not code:
             return
+        self._import_code_text(code)
 
+    def _import_code_text(self, code: str) -> None:
+        """Decode *code* and load the painting into the editor."""
         try:
             result = decode(code, self._rule)
         except CodeError as e:

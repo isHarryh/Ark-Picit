@@ -37,3 +37,19 @@ RuleCN2026Aug = ArkPicRule(
 ALL_RULESETS: dict[str, ArkPicRule] = {
     "CN2026Aug": RuleCN2026Aug,
 }
+
+
+def decode_any_ruleset(code: str):
+    """Decode *code* with the first compatible shipped ruleset.
+
+    Returns a ``DecodedPic`` or None when no shipped ruleset matches.
+    """
+    from src.core import decode
+    from src.core.code import CodeError
+
+    for rule in ALL_RULESETS.values():
+        try:
+            return decode(code, rule)
+        except CodeError:
+            continue
+    return None

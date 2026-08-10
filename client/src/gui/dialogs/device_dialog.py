@@ -8,17 +8,17 @@ Empty groups show an empty-state hint instead of being removed.
 
 from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPen, QPixmap
-from PySide6.QtWidgets import QHBoxLayout, QListWidgetItem, QStackedWidget, QVBoxLayout, QWidget
-from qfluentwidgets import FluentIcon as FIF
+from PySide6.QtWidgets import QListWidget, QListWidgetItem, QStackedWidget, QVBoxLayout, QWidget
 from qfluentwidgets import (
+    BodyLabel,
     CaptionLabel,
-    IndeterminateProgressBar,
+    IndeterminateProgressRing,
     InfoBar,
-    ListWidget,
     MessageBoxBase,
     SubtitleLabel,
     isDarkTheme,
 )
+from qfluentwidgets import FluentIcon as FIF
 
 from src.app.device_manager import DeviceCandidate, deviceManager
 from src.auto import DeviceKind
@@ -75,25 +75,27 @@ class DeviceDialog(MessageBoxBase):
         # List and loading state share the same area, so switching between
         # them does not reflow the dialog layout.
         self._stack = QStackedWidget(self)
-        self.listWidget = ListWidget(self)
+        self.listWidget = QListWidget(self)
         self.listWidget.setMinimumHeight(260)
+        self.listWidget.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._stack.addWidget(self.listWidget)
 
-        self._progress = IndeterminateProgressBar(self)
-        self._progress.setFixedWidth(220)
-        self._hint = CaptionLabel("Searching for controllers...", self)
+        self._progress = IndeterminateProgressRing(self, start=False)
+        self._progress.setFixedSize(32, 32)
+        self._loadingTitle = BodyLabel("Searching for controllers", self)
+        self._loadingTitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._hint = CaptionLabel("Checking Windows and adb devices...", self)
+        self._hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._hint.setWordWrap(True)
-        loading_row = QHBoxLayout()
-        loading_row.addStretch()
-        loading_row.addWidget(self._hint)
-        loading_row.addSpacing(12)
-        loading_row.addWidget(self._progress)
-        loading_row.addStretch()
         self._loadingPage = QWidget(self)
         self._loadingPage.setMinimumHeight(260)
         loading_vbox = QVBoxLayout(self._loadingPage)
         loading_vbox.addStretch(1)
-        loading_vbox.addLayout(loading_row)
+        loading_vbox.addWidget(self._progress, 0, Qt.AlignmentFlag.AlignHCenter)
+        loading_vbox.addSpacing(12)
+        loading_vbox.addWidget(self._loadingTitle)
+        loading_vbox.addSpacing(2)
+        loading_vbox.addWidget(self._hint)
         loading_vbox.addStretch(1)
         self._stack.addWidget(self._loadingPage)
 
@@ -104,6 +106,7 @@ class DeviceDialog(MessageBoxBase):
         self.listWidget.itemDoubleClicked.connect(lambda _item: self.accept())
 
         if candidates is None:
+            self.yesButton.setEnabled(False)
             self._stack.setCurrentWidget(self._loadingPage)
             self._progress.start()
         else:
@@ -113,13 +116,15 @@ class DeviceDialog(MessageBoxBase):
         """Populate the list with discovered candidates, replacing the loading state."""
         self._stack.setCurrentWidget(self.listWidget)
         self._progress.stop()
+        self.yesButton.setEnabled(True)
         self._populate(candidates)
 
     def set_error(self, message: str) -> None:
         """Replace the loading state with a discovery error message."""
         self._progress.stop()
+        self._progress.hide()
+        self._loadingTitle.setText("Unable to search for controllers")
         self._hint.setText(message)
-        self._hint.setStyleSheet("color: #c0392b;")
 
     def validate(self) -> bool:
         """Only accept the dialog when a device candidate is selected."""
@@ -166,7 +171,10 @@ class DeviceDialog(MessageBoxBase):
 
     def _add_candidate(self, candidate: DeviceCandidate) -> None:
         icon = _smartphone_icon() if candidate.kind is DeviceKind.ADB else FIF.EMBED.icon()
-        item = QListWidgetItem(icon, candidate.label)
+        label = candidate.label
+        if candidate.kind is DeviceKind.WIN32 and len(label) > 32:
+            label = f"{label[:32]}..."
+        item = QListWidgetItem(icon, label)
         item.setData(Qt.ItemDataRole.UserRole, candidate)
         self.listWidget.addItem(item)
 

@@ -1,7 +1,6 @@
 """Dialog for editing a painting's name and description."""
 
 from PySide6.QtWidgets import QHBoxLayout
-
 from qfluentwidgets import BodyLabel, LineEdit, MessageBoxBase, SubtitleLabel, SwitchButton
 
 from src.core.storage import StoredPic

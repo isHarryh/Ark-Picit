@@ -8,6 +8,7 @@ from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QVBoxLayout
 from qfluentwidgets import (
     BodyLabel,
     HeaderCardWidget,
+    InfoBar,
     MessageBox,
     PrimaryPushButton,
     PushButton,
@@ -53,7 +54,7 @@ class PaintingCard(HeaderCardWidget):
             img = QImage.fromData(stored.preview_png)
             thumb = QPixmap.fromImage(img).scaled(
                 64, 64, Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation,
+                Qt.TransformationMode.FastTransformation,
             )
             preview_label = BodyLabel()
             preview_label.setPixmap(thumb)
@@ -81,14 +82,18 @@ class PaintingCard(HeaderCardWidget):
         export_btn = PushButton(FIF.SHARE, "Code")
         rename_btn = PushButton(FIF.TAG, "Rename")
         delete_btn = PushButton(FIF.DELETE, "Delete")
+        self.publish_btn = PushButton(FIF.CLOUD, "Publish")
+        self.publish_btn.setToolTip("Upload this painting to the plaza")
         open_btn.clicked.connect(lambda: signalBus.editPainting.emit(stored.id))
         export_btn.clicked.connect(lambda: self._show_code(stored))
         rename_btn.clicked.connect(self._rename)
         delete_btn.clicked.connect(lambda: self._delete())
+        self.publish_btn.clicked.connect(self._publish)
         btns.addWidget(open_btn, 0, 0)
         btns.addWidget(export_btn, 0, 1)
         btns.addWidget(rename_btn, 1, 0)
         btns.addWidget(delete_btn, 1, 1)
+        btns.addWidget(self.publish_btn, 2, 0, 1, 2)
         btns_holder = QVBoxLayout()
         btns_holder.addStretch()
         btns_holder.addLayout(btns)
@@ -105,6 +110,39 @@ class PaintingCard(HeaderCardWidget):
         code = encode(pic, stored.name, stored.description)
         dialog = CodeDialog(code, self.window(), readonly=True)
         dialog.exec()
+
+    def _publish(self) -> None:
+        """Upload this painting to the plaza (with a confirmation dialog)."""
+        from src.app.plaza import plaza
+        from src.core import encode
+
+        box = MessageBox(
+            "Confirm upload?",
+            "Uploading means you grant the community usage rights to this artwork. "
+            "You may credit yourself in the artwork description before uploading. "
+            "Uploaded content may take some time to become publicly visible after review.",
+            self.window(),
+        )
+        box.yesButton.setText("Upload")
+        box.cancelButton.setText("Cancel")
+        if not box.exec():
+            return
+
+        pic, _ = self.stored.to_ark_pic()
+        code = encode(pic, self.stored.name, self.stored.description)
+        self.publish_btn.setEnabled(False)
+
+        def on_done(result) -> None:
+            self.publish_btn.setEnabled(True)
+            if not result.ok:
+                InfoBar.error("Publish failed", result.detail(), parent=self.window(), duration=3000)
+                return
+            InfoBar.success(
+                "Published", "Your artwork is now on the plaza.",
+                parent=self.window(), duration=2500,
+            )
+
+        plaza.upload(code, on_done)
 
     def _rename(self) -> None:
         """Edit the name/description, optionally refreshing the saved time."""

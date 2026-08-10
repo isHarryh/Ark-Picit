@@ -5,6 +5,7 @@ from qfluentwidgets import FluentWindow, NavigationItemPosition
 
 from src.app.signal_bus import signalBus
 from src.gui.pages.create_page import CreatePage
+from src.gui.pages.explore_page import ExplorePage
 from src.gui.pages.gallery_page import GalleryPage
 from src.gui.pages.home_page import HomePage
 from src.gui.pages.settings_page import SettingsPage
@@ -20,6 +21,11 @@ class MainWindow(FluentWindow):
         self._init_pages()
         self._init_navigation()
         self._connect_signals()
+
+        # Startup meta round-trip (issues/echoes the client token)
+        from src.app.plaza import plaza
+        plaza.newAnnouncements.connect(self._show_new_announcements)
+        plaza.warmup()
 
     # ------------------------------------------------------------------
     # Setup
@@ -48,12 +54,14 @@ class MainWindow(FluentWindow):
         self.homePage = HomePage(self)
         self.createPage = CreatePage(self)
         self.galleryPage = GalleryPage(self)
+        self.explorePage = ExplorePage(self)
         self.settingsPage = SettingsPage(self)
 
     def _init_navigation(self) -> None:
         self.addSubInterface(self.homePage, FIF.HOME, self.tr("Home"))
         self.addSubInterface(self.createPage, FIF.EDIT, self.tr("Create"))
         self.addSubInterface(self.galleryPage, FIF.PHOTO, self.tr("Gallery"))
+        self.addSubInterface(self.explorePage, FIF.GLOBE, self.tr("Explore"))
         self.addSubInterface(self.settingsPage, FIF.SETTING, self.tr("Settings"),
                              position=NavigationItemPosition.BOTTOM)
 
@@ -68,3 +76,11 @@ class MainWindow(FluentWindow):
     def _go_create(self) -> None:
         """Switch to the create page."""
         self.switchTo(self.createPage)
+
+    def _show_new_announcements(self) -> None:
+        """Popup the announcement dialog when a new announcement set arrives."""
+        from src.app.plaza import plaza
+        from src.gui.pages.settings_page import AnnouncementDialog
+
+        dialog = AnnouncementDialog(plaza.announcements(), self, hold_seconds=3)
+        dialog.exec()

@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from qfluentwidgets import (
+    ConfigItem,
     EnumSerializer,
     OptionsConfigItem,
     OptionsValidator,
@@ -21,6 +22,13 @@ class AppConfig(QConfig):
         OptionsValidator([Theme.LIGHT, Theme.DARK, Theme.AUTO]),
         EnumSerializer(Theme),
     )
+
+    # API (explore server)
+    exploreServerUrl = ConfigItem("API", "ExploreServerUrl", "http://127.0.0.1:7999")
+    exploreToken = ConfigItem("API", "ExploreToken", "")
+    exploreClientToken = ConfigItem("API", "ExploreClientToken", "")
+    announcementHash = ConfigItem("API", "AnnouncementHash", "")
+    networkEnabled = ConfigItem("API", "NetworkEnabled", True)
 
 
 # ---------------------------------------------------------------------------

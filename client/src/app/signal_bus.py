@@ -10,6 +10,7 @@ class SignalBus(QObject):
     newPainting = Signal()  # start a fresh canvas
     editPainting = Signal(str)  # edit a stored painting by id
     paintingSaved = Signal()  # gallery should refresh
+    importCode = Signal(str)  # load an ArkPicCode text into the editor
 
 
 signalBus = SignalBus()
