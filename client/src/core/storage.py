@@ -9,6 +9,8 @@ from __future__ import annotations
 import base64
 import json
 import logging
+import shutil
+import zipfile
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -166,3 +168,42 @@ def import_from_file(path: Path) -> StoredPic:
     data = json.loads(path.read_text(encoding="utf-8"))
     data["id"] = uuid4().hex  # fresh id so it doesn't collide
     return StoredPic(**data)
+
+
+# ---------------------------------------------------------------------------
+# Backup (whole-gallery zip archive)
+# ---------------------------------------------------------------------------
+
+def backup_to_zip(path: Path) -> int:
+    """Package every gallery JSON file into the zip archive at *path*.
+
+    Returns the number of paintings written.
+    """
+    count = 0
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zf:
+        for p in _gallery_dir().glob("*.json"):
+            zf.write(p, p.name)
+            count += 1
+    return count
+
+
+def restore_from_zip(path: Path) -> int:
+    """Extract painting JSON files from the zip archive at *path*.
+
+    Files are written to the gallery directory, replacing any same-named
+    file. Directory entries and non-JSON files are skipped, and only the
+    file name is used so archive paths cannot escape the gallery.
+    Returns the number of paintings restored.
+    """
+    count = 0
+    with zipfile.ZipFile(path, "r") as zf:
+        for info in zf.infolist():
+            if info.is_dir():
+                continue
+            name = Path(info.filename).name
+            if not name.lower().endswith(".json"):
+                continue
+            with zf.open(info) as src, (_gallery_dir() / name).open("wb") as dst:
+                shutil.copyfileobj(src, dst)
+            count += 1
+    return count

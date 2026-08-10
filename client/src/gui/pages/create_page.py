@@ -12,6 +12,7 @@ from qfluentwidgets import (
     InfoBar,
     InfoBarPosition,
     LineEdit,
+    MessageBox,
     PrimaryPushButton,
     PrimarySplitPushButton,
     PushButton,
@@ -46,6 +47,8 @@ class CreatePage(BasePage):
         self._pic: ArkPic = ArkPic(self._rule)
         self._stored_id: str | None = None  # None = unsaved new painting
         self._saved_snapshot: list[list[int]] | None = None  # last saved/loaded grid
+        self._saved_name: str = ""  # last saved/loaded name
+        self._saved_description: str = ""  # last saved/loaded description
         self._canvas: PixelCanvas | None = None
         self._palette: ColorPalette | None = None
         self._build_ui()
@@ -126,20 +129,16 @@ class CreatePage(BasePage):
         tool_layout.addWidget(tool_title)
 
         self.toolPaint = ToolButton(FIF.PENCIL_INK)
-        self.toolPaint.setToolTip("Paint")
         self.toolPaint.setCheckable(True)
         self.toolPaint.setChecked(True)
 
         self.toolFill = ToolButton(FIF.BACKGROUND_FILL)
-        self.toolFill.setToolTip("Fill bucket")
         self.toolFill.setCheckable(True)
 
         self.toolUndo = ToolButton(FIF.RETURN)
-        self.toolUndo.setToolTip("Undo (Ctrl+Z)")
         self.toolUndo.setEnabled(False)
 
         self.toolRedo = ToolButton(FIF.RIGHT_ARROW)
-        self.toolRedo.setToolTip("Redo (Ctrl+Shift+Z)")
         self.toolRedo.setEnabled(False)
 
         # Icon buttons: 2 per row
@@ -179,7 +178,7 @@ class CreatePage(BasePage):
         self.viewLayout.addStretch()
 
     def _connect_signals(self) -> None:
-        self.btnNew.clicked.connect(self._new_painting)
+        self.btnNew.clicked.connect(self._on_new)
         self.btnSave.clicked.connect(self._on_save)
         self.btnExport.clicked.connect(self._on_export_code)
         self.btnImport.clicked.connect(self._on_import_code)
@@ -189,11 +188,13 @@ class CreatePage(BasePage):
         self.toolFill.clicked.connect(self._on_tool_fill)
         self.toolUndo.clicked.connect(self._on_undo)
         self.toolRedo.clicked.connect(self._on_redo)
+        self.nameEdit.textChanged.connect(self._update_save_state)
+        self.descEdit.textChanged.connect(self._update_save_state)
 
         # Shortcuts
         self.shortcutUndo = QShortcut(QKeySequence("Ctrl+Z"), self)
         self.shortcutUndo.activated.connect(self._on_undo)
-        self.shortcutRedo = QShortcut(QKeySequence("Ctrl+Shift+Z"), self)
+        self.shortcutRedo = QShortcut(QKeySequence("Ctrl+Y"), self)
         self.shortcutRedo.activated.connect(self._on_redo)
 
         signalBus.newPainting.connect(self._new_painting)
@@ -243,11 +244,27 @@ class CreatePage(BasePage):
         self._update_save_state()
 
     def _has_unsaved_changes(self) -> bool:
-        """Return whether the painting differs from the last saved/loaded version.
+        """Return whether the painting or its metadata differs from the last
+        saved/loaded version.
 
-        A never-saved painting always counts as having unsaved changes.
+        A never-saved painting counts as having unsaved changes, except for
+        a blank canvas: empty name/description with every cell at the
+        default color is treated as a pristine, saved state.
         """
-        return self._saved_snapshot is None or self._pic.grid != self._saved_snapshot
+        if self._saved_snapshot is None:
+            if (
+                not self.nameEdit.text().strip()
+                and not self.descEdit.text().strip()
+                and all(c == self._rule.default_color_id for c in self._pic.flat)
+            ):
+                return False
+            return True
+        grid_changed = self._pic.grid != self._saved_snapshot
+        meta_changed = (
+            self.nameEdit.text().strip() != self._saved_name
+            or self.descEdit.text().strip() != self._saved_description
+        )
+        return grid_changed or meta_changed
 
     def _update_save_state(self) -> None:
         """Disable Save when there are no unsaved changes; Save As stays available."""
@@ -270,6 +287,8 @@ class CreatePage(BasePage):
     def _new_painting(self) -> None:
         self._stored_id = None
         self._saved_snapshot = None
+        self._saved_name = ""
+        self._saved_description = ""
         self._pic = ArkPic(self._rule)
         self.nameEdit.clear()
         self.descEdit.clear()
@@ -278,7 +297,24 @@ class CreatePage(BasePage):
         self._rebuild_palette()
         self._on_color_selected(self._rule.default_color_id)
 
+    def _on_new(self) -> None:
+        """Start a fresh painting, asking for confirmation when unsaved work exists."""
+        if self._has_unsaved_changes():
+            box = MessageBox(
+                "New painting?",
+                "The current painting has unsaved changes. "
+                "Start a new painting anyway?",
+                self.window(),
+            )
+            box.yesButton.setText("New")
+            box.cancelButton.setText("Cancel")
+            if not box.exec():
+                return
+        self._new_painting()
+
     def _load_by_id(self, pic_id: str) -> None:
+        if not self._confirm_overwrite_current():
+            return
         stored = storage.load(pic_id)
         if stored is None:
             InfoBar.error("Load failed", f"Painting {pic_id} not found.",
@@ -289,6 +325,8 @@ class CreatePage(BasePage):
         self._rule = rule
         self._pic = pic
         self._saved_snapshot = pic.snapshot()
+        self._saved_name = stored.name
+        self._saved_description = stored.description
         self.nameEdit.setText(stored.name)
         self.descEdit.setText(stored.description)
         # Lock ruleset selector
@@ -337,7 +375,14 @@ class CreatePage(BasePage):
             self._canvas.redo()
 
     def _do_save(self, force_new: bool) -> None:
-        name = self.nameEdit.text().strip() or "Untitled"
+        name = self.nameEdit.text().strip()
+        if not name:
+            InfoBar.warning(
+                "Name missing",
+                "Please enter a name before saving.",
+                parent=self, position=InfoBarPosition.TOP, duration=3000,
+            )
+            return
         desc = self.descEdit.text().strip()
 
         if force_new or self._stored_id is None:
@@ -359,6 +404,8 @@ class CreatePage(BasePage):
         storage.save(stored)
         self._stored_id = stored.id
         self._saved_snapshot = self._pic.snapshot()
+        self._saved_name = stored.name
+        self._saved_description = stored.description
         self._update_save_state()
         self.ruleCombo.setEnabled(False)
         signalBus.paintingSaved.emit()
@@ -422,7 +469,7 @@ class CreatePage(BasePage):
             InfoBar.error("Import failed", str(e), parent=self, duration=3000)
             return
 
-        if not self._confirm_import(result.pic):
+        if not self._confirm_overwrite_current():
             return
         self._pic = result.pic
         self._stored_id = None
@@ -441,15 +488,22 @@ class CreatePage(BasePage):
         InfoBar.success("Imported", "Painting loaded from code.",
                         parent=self, duration=2000)
 
-    def _confirm_import(self, pic: ArkPic) -> bool:
-        """Show the import preview dialog; True continues the import."""
-        from src.gui.dialogs.confirm_import_dialog import ConfirmImportDialog
+    def _confirm_overwrite_current(self) -> bool:
+        """Confirm replacing the current canvas when it has unsaved changes.
 
-        return ConfirmImportDialog(
-            pic,
-            "Replace the current canvas with this painting? Unsaved work will be lost.",
+        Returns True when the current painting is already saved or when the
+        user accepts overwriting it.
+        """
+        if not self._has_unsaved_changes():
+            return True
+        box = MessageBox(
+            "Overwrite current canvas?",
+            "The current painting has unsaved changes. Continue anyway?",
             self.window(),
-        ).exec()
+        )
+        box.yesButton.setText("Overwrite")
+        box.cancelButton.setText("Cancel")
+        return box.exec()
 
     def _on_import_game_canvas(self) -> None:
         """Read the current in-game canvas and load it into the editor."""
@@ -488,7 +542,7 @@ class CreatePage(BasePage):
     @Slot(object)
     def _apply_imported_canvas(self, pic: ArkPic) -> None:
         self.btnImport.button.setEnabled(True)
-        if not self._confirm_import(pic):
+        if not self._confirm_overwrite_current():
             return
         self._pic = pic
         self._stored_id = None

@@ -196,7 +196,6 @@ class ExploreDetailDialog(QDialog):
         remove_layout = QHBoxLayout(self.removeRow)
         remove_layout.setContentsMargins(0, 0, 0, 0)
         self.removeBtn = PushButton(FIF.DELETE, "Remove from Plaza")
-        self.removeBtn.setToolTip("Delete this artwork from the plaza")
         self.removeBtn.clicked.connect(self._on_remove)
         remove_layout.addWidget(self.removeBtn)
         remove_layout.addStretch()

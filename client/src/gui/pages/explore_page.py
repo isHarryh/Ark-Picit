@@ -272,7 +272,6 @@ class ExplorePage(BasePage):
         header.addWidget(self.viewCombo)
         header.addSpacing(8)
         self.pageCombo = ComboBox(self)
-        self.pageCombo.setToolTip("Jump to page")
         header.addWidget(self.pageCombo)
         header.addStretch()
         self.refreshBtn = PushButton(FIF.SYNC, "Refresh")

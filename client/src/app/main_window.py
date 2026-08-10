@@ -18,9 +18,11 @@ class MainWindow(FluentWindow):
         super().__init__()
 
         self._init_window()
+        # Signal-bus connections must be registered before the pages so that
+        # the window switches to Create before page slots (confirm dialogs) run.
+        self._connect_signals()
         self._init_pages()
         self._init_navigation()
-        self._connect_signals()
 
         # Startup meta round-trip (issues/echoes the client token)
         from src.app.plaza import plaza
@@ -68,6 +70,7 @@ class MainWindow(FluentWindow):
     def _connect_signals(self) -> None:
         signalBus.newPainting.connect(self._go_create)
         signalBus.editPainting.connect(self._go_create)
+        signalBus.importCode.connect(self._go_create)
 
     # ------------------------------------------------------------------
     # Public API

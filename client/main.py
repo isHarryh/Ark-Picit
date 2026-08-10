@@ -61,10 +61,36 @@ def run_client() -> None:
         font.setPointSize(9)
         app.setFont(font)
 
+    # Reject risky install locations before touching disk (mirrors MAA).
+    from PySide6.QtWidgets import QMessageBox
+    from src.utils import path_guard
+
     # Runtime directories live in the working directory
-    from src.utils.paths import CONFIG_DIR, GALLERY_DIR, ensure_runtime_dirs
+    from src.utils.paths import (
+        CONFIG_DIR,
+        GALLERY_DIR,
+        cleanup_old_screenshots,
+        ensure_runtime_dirs,
+    )
+
+    risky, reason = path_guard.risky_location(Path.cwd())
+    if risky:
+        QMessageBox.critical(
+            None,
+            "Ark Picit",
+            "Ark Picit cannot start from an unsafe location.\n\n"
+            f"Current folder: {Path.cwd()}\n"
+            f"Reason: {path_guard.reason_text(reason)}.\n\n"
+            "Please move the program to a normal folder "
+            "(for example D:\\ArkPicit) and start it again.",
+        )
+        sys.exit(1)
+
     ensure_runtime_dirs()
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Screenshot retention: drop PNGs older than 7 days, keep at most 10
+    cleanup_old_screenshots()
 
     # Gallery storage
     from src.core import storage

@@ -226,7 +226,6 @@ class AnnouncementManagerDialog(QDialog):
         edit.setText(text)
         edit.setPlaceholderText("Announcement text")
         removeBtn = ToolButton(FIF.DELETE, row)
-        removeBtn.setToolTip("Delete")
         removeBtn.clicked.connect(lambda: self._remove_entry(row))
 
         layout.addWidget(edit, 1)
@@ -293,7 +292,6 @@ class _TokenCard(SettingCard):
         self.tokenEdit.setPlaceholderText("Enter the code")
         self.tokenEdit.setFixedWidth(200)
         self.verifyBtn = ToolButton(FIF.ACCEPT, self)
-        self.verifyBtn.setToolTip("Verify")
         self.hBoxLayout.addWidget(self.tokenEdit, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(8)
         self.hBoxLayout.addWidget(self.verifyBtn, 0, Qt.AlignmentFlag.AlignRight)

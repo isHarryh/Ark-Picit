@@ -1,10 +1,12 @@
 """Gallery page: browse, edit, delete, export saved paintings."""
 
+import zipfile
 from datetime import datetime
+from pathlib import Path
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QImage, QPixmap
-from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QVBoxLayout
+from PySide6.QtGui import QAction, QImage, QPixmap
+from PySide6.QtWidgets import QFileDialog, QGridLayout, QHBoxLayout, QVBoxLayout
 from qfluentwidgets import (
     BodyLabel,
     HeaderCardWidget,
@@ -12,7 +14,9 @@ from qfluentwidgets import (
     MessageBox,
     PrimaryPushButton,
     PushButton,
+    RoundMenu,
     SearchLineEdit,
+    SplitPushButton,
     SubtitleLabel,
     TitleLabel,
 )
@@ -83,7 +87,6 @@ class PaintingCard(HeaderCardWidget):
         rename_btn = PushButton(FIF.TAG, "Rename")
         delete_btn = PushButton(FIF.DELETE, "Delete")
         self.publish_btn = PushButton(FIF.CLOUD, "Publish")
-        self.publish_btn.setToolTip("Upload this painting to the plaza")
         open_btn.clicked.connect(lambda: signalBus.editPainting.emit(stored.id))
         export_btn.clicked.connect(lambda: self._show_code(stored))
         rename_btn.clicked.connect(self._rename)
@@ -191,6 +194,10 @@ class GalleryPage(BasePage):
         header.addWidget(self.searchEdit)
         self.refreshBtn = PushButton(FIF.SYNC, "Refresh")
         header.addWidget(self.refreshBtn)
+        self.backupBtn = SplitPushButton(FIF.ZIP_FOLDER, "Backup", self)
+        self._setup_backup_menu()
+        self.backupBtn.clicked.connect(self._on_export_backup)
+        header.addWidget(self.backupBtn)
         self.viewLayout.addLayout(header)
 
         self.emptyListLabel = SubtitleLabel("No paintings yet. Create one!")
@@ -205,6 +212,75 @@ class GalleryPage(BasePage):
         self.searchEdit.textChanged.connect(self._filter)
         self.refreshBtn.clicked.connect(self.refresh)
         signalBus.paintingSaved.connect(self.refresh)
+
+    def _setup_backup_menu(self) -> None:
+        """Attach the Export/Import Backup actions to the drop-down menu."""
+        export = QAction(FIF.SAVE_COPY.icon(), "Export Backup", self)
+        import_backup = QAction(FIF.DOWNLOAD.icon(), "Import Backup", self)
+        export.triggered.connect(self._on_export_backup)
+        import_backup.triggered.connect(self._on_import_backup)
+        menu = RoundMenu(parent=self)
+        menu.addAction(export)
+        menu.addAction(import_backup)
+        self.backupBtn.setFlyout(menu)
+
+    def _on_export_backup(self) -> None:
+        """Package all gallery paintings into a user-chosen zip archive."""
+        if not storage.list_all():
+            InfoBar.warning(
+                "Empty gallery", "Nothing to back up.",
+                parent=self.window(), duration=3000,
+            )
+            return
+        path, _ = QFileDialog.getSaveFileName(
+            self.window(), "Export Backup", "gallery-backup.zip",
+            "ZIP archives (*.zip)",
+        )
+        if not path:
+            return
+        try:
+            count = storage.backup_to_zip(Path(path))
+        except OSError as exc:
+            InfoBar.error("Export failed", str(exc), parent=self.window(), duration=3000)
+            return
+        InfoBar.success(
+            "Backup exported", f"{count} paintings saved.",
+            parent=self.window(), duration=2500,
+        )
+
+    def _on_import_backup(self) -> None:
+        """Restore gallery paintings from a user-chosen zip archive."""
+        path, _ = QFileDialog.getOpenFileName(
+            self.window(), "Import Backup", "",
+            "ZIP archives (*.zip);;All files (*)",
+        )
+        if not path:
+            return
+        box = MessageBox(
+            "Import backup?",
+            "All gallery files with matching names will be replaced by this backup.",
+            self.window(),
+        )
+        box.yesButton.setText("Import")
+        box.cancelButton.setText("Cancel")
+        if not box.exec():
+            return
+        try:
+            count = storage.restore_from_zip(Path(path))
+        except (OSError, zipfile.BadZipFile) as exc:
+            InfoBar.error("Import failed", str(exc), parent=self.window(), duration=3000)
+            return
+        self.refresh()
+        if count == 0:
+            InfoBar.warning(
+                "No paintings found", "The backup contains no gallery files.",
+                parent=self.window(), duration=3000,
+            )
+            return
+        InfoBar.success(
+            "Backup imported", f"{count} paintings restored.",
+            parent=self.window(), duration=2500,
+        )
 
     def refresh(self) -> None:
         """Reload all paintings from storage."""
@@ -226,7 +302,8 @@ class GalleryPage(BasePage):
         query = text.strip().lower()
         visible = 0
         for i in range(self.cardsLayout.count()):
-            card = self.cardsLayout.itemAt(i).widget()
+            card = self.cardsLayout.itemAt(i)
+            card = card.widget() if card is not None else None
             if not isinstance(card, PaintingCard):
                 continue
             matches = (
