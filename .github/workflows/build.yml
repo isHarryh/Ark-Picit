@@ -1,0 +1,40 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - "main"
+  workflow_dispatch:
+
+env:
+  PYTHONIOENCODING: "UTF-8"
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: |
+          pip install uv
+          uv --version
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      - name: Build distributable
+        run: uv run python tools/build.py
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: ArkPicit-${{ github.ref_name }}-${{ github.sha }}
+          path: build/dist/*
