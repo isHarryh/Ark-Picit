@@ -5,8 +5,8 @@
 Reads the project metadata and the ``[tool.build]`` build definition from
 ``pyproject.toml``, then produces two artifacts under ``build/dist/``:
 
-- ``ark-picit-v<version>.exe``  — single-file executable (one-click run)
-- ``ark-picit-v<version>.zip``  — extracted-directory build, zipped (portable)
+- ``ArkPicit-v<version>.exe``  — single-file executable (one-click run)
+- ``ArkPicit-v<version>.zip``  — extracted-directory build, zipped (portable)
 
 Run from the repository root:
 
@@ -67,7 +67,7 @@ def _exec(cmd: list[str]) -> None:
         sys.exit(1)
 
 
-def _generate_version_file(proj_info: dict, build_dir: Path) -> Path:
+def _generate_version_file(proj_info: dict, app_name: str, build_dir: Path) -> Path:
     """Write the Windows version resource consumed by ``--version-file``."""
     version_file = build_dir / "version.txt"
     version_ints = f"({proj_info['version'].replace('.', ',')},0)"
@@ -92,7 +92,7 @@ StringFileInfo([
     StringStruct(u'FileDescription', u'{proj_info["description"]}'),
     StringStruct(u'FileVersion', u'{proj_info["version"]}'),
     StringStruct(u'LegalCopyright', u'Copyright (c) {proj_info["author"]} @{proj_info["license"]} License'),
-    StringStruct(u'ProductName', u'Ark-Picit'),
+    StringStruct(u'ProductName', u'{app_name}'),
     StringStruct(u'ProductVersion', u'{proj_info["version"]}')])
   ])
 ])
@@ -241,11 +241,12 @@ def _build(proj_info: dict, build_dir: str) -> None:
 
     print("Generating version file and build metadata...")
     build_def = _get_build_def()
-    version_file = _generate_version_file(proj_info, Path(build_dir))
+    app_name = build_def.get("app-name", "ArkPicit")
+    version_file = _generate_version_file(proj_info, app_name, Path(build_dir))
     default_server = build_def.get("default_api_server", "")
     build_meta = _generate_build_meta(proj_info["version"], default_server, Path(build_dir))
 
-    name = f"{proj_info['name']}-v{proj_info['version']}"
+    name = f"{app_name}-v{proj_info['version']}"
 
     # Common data files; add-data source:dest pairs are separated by | (Ark-Unpacker style).
     datas: list[tuple[str, str]] = []

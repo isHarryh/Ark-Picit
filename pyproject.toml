@@ -37,6 +37,7 @@ packages = ["client/src"]
 "client/src/resources/i18n" = "src/resources/i18n"
 
 [tool.build]
+app-name = "ArkPicit"
 build-dir = "$project$/build"
 entry = "$project$/client/main.py"
 add-data = "$project$/client/src/resources/i18n:src/resources/i18n|$project$/client/assets:assets"

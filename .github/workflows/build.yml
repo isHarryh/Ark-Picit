@@ -33,8 +33,17 @@ jobs:
       - name: Build distributable
         run: uv run python tools/build.py
 
-      - name: Upload artifacts
+      # The two artifacts are uploaded separately so that each stays a
+      # single file on the artifact page (a combined path would be packed
+      # into one zip by the upload action).
+      - name: Upload exe artifact
         uses: actions/upload-artifact@v6
         with:
-          name: ArkPicit-${{ github.ref_name }}-${{ github.sha }}
-          path: build/dist/*
+          name: ArkPicit-${{ github.ref_name }}-${{ github.sha }}-win
+          path: build/dist/ArkPicit-*.exe
+
+      - name: Upload zip artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ArkPicit-${{ github.ref_name }}-${{ github.sha }}-portable
+          path: build/dist/ArkPicit-*.zip
