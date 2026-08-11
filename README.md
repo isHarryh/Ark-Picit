@@ -3,7 +3,7 @@
    <h1> Ark-Picit </h1>
    <p>
       Arknights Pixel Art Painter | 明日方舟奇象巡展像素画创作工具 <br>
-      <code><b> v1.0.0 </b></code>
+      <code><b> v1.0.1 </b></code>
    </p>
    <p>
       <img alt="GitHub Top Language" src="https://img.shields.io/github/languages/top/isHarryh/Ark-Picit?label=Python">
