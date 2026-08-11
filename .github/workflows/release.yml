@@ -38,12 +38,11 @@ jobs:
       - name: Rename artifacts
         shell: pwsh
         run: |
-          $hash = "${{ github.sha }}".Substring(0, 7)
           $version = "${{ github.ref_name }}".TrimStart('v')
           Get-ChildItem "build/dist/ArkPicit-v$version.exe" |
-            Rename-Item -NewName { "ArkPicit-v$version-$hash-win.exe" }
+            Rename-Item -NewName { "ArkPicit-v$version-win.exe" }
           Get-ChildItem "build/dist/ArkPicit-v$version.zip" |
-            Rename-Item -NewName { "ArkPicit-v$version-$hash-win.zip" }
+            Rename-Item -NewName { "ArkPicit-v$version-win.zip" }
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3

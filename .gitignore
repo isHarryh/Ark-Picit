@@ -15,4 +15,6 @@ venv/
 data/
 
 # Logs
+*.exe
 *.log
+*.zip
