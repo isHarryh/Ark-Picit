@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+env:
+  PYTHONIOENCODING: "UTF-8"
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: |
+          pip install uv
+          uv --version
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      - name: Build distributable
+        run: uv run python tools/build.py
+
+      - name: Rename artifacts
+        shell: pwsh
+        run: |
+          $hash = "${{ github.sha }}".Substring(0, 7)
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          Get-ChildItem "build/dist/ArkPicit-v$version.exe" |
+            Rename-Item -NewName { "ArkPicit-v$version-$hash-win.exe" }
+          Get-ChildItem "build/dist/ArkPicit-v$version.zip" |
+            Rename-Item -NewName { "ArkPicit-v$version-$hash-win.zip" }
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          name: ${{ github.ref_name }}
+          body: ''
+          files: |
+            build/dist/ArkPicit-v*-win.exe
+            build/dist/ArkPicit-v*-win.zip
