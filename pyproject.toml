@@ -2,6 +2,10 @@
 name = "ark-picit"
 version = "0.1.0"
 description = "Arknights Pixel Art Painter"
+authors = [
+    { name = "Harry Huang", email = "harryhuang2652@qq.com" }
+]
+license = "BSD-3-Clause"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "PySide6>=6.11,<6.12",
@@ -31,3 +35,10 @@ packages = ["client/src"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "client/src/resources/i18n" = "src/resources/i18n"
+
+[tool.build]
+build-dir = "$project$/build"
+entry = "$project$/client/main.py"
+add-data = "$project$/client/src/resources/i18n:src/resources/i18n|$project$/client/assets:assets"
+log-level = "WARN"
+default_api_server = "https://arkpicit.harryh.cn"

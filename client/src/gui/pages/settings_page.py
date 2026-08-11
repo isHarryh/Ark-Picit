@@ -26,6 +26,7 @@ from qfluentwidgets import (
 )
 
 from src.app.config import cfg
+from src.app.dist import app_version
 from src.app.i18n import fmt, localize_http_error
 from src.app.network import HttpResult
 from src.app.plaza import NetworkDisabledReason, plaza
@@ -60,10 +61,10 @@ class _AnnouncementCard(SettingCard):
 
 
 class _AboutCard(SettingCard):
-    """Opens the project repository and new-issue page."""
+    """Shows the app version and opens the project repository / issue page."""
 
     def __init__(self, parent=None):
-        super().__init__(FIF.INFO, self.tr("AboutTitle"), None, parent)
+        super().__init__(FIF.INFO, self.tr("AboutTitle"), f"v{app_version()}", parent)
         githubBtn = PushButton("GitHub")
         issueBtn = PushButton(self.tr("SubmitIssueButton"))
         githubBtn.clicked.connect(

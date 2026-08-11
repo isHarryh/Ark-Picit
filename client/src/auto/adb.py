@@ -27,6 +27,16 @@ _ADB_CONNECT_TIMEOUT_S = 5
 _EMULATOR_ADB_PORTS = (5555, 5556, 5557, 5558, 5559, 7555, 16384, 21503, 62001)
 
 
+def _no_window_flags() -> int:
+    """Return creation flags that suppress a console window for child processes.
+
+    adb is a console program; without CREATE_NO_WINDOW every adb invocation
+    flashes a black console window when the parent (packaged windowed exe or
+    pythonw) has no console of its own.
+    """
+    return getattr(subprocess, "CREATE_NO_WINDOW", 0)
+
+
 @dataclass(frozen=True, slots=True)
 class AdbDeviceInfo:
     """A device reported by ``adb devices``."""
@@ -177,7 +187,10 @@ def _validate_adb(path: str) -> bool:
     """Return whether *path* is a runnable adb binary (exit code 0 on version)."""
     try:
         result = subprocess.run(
-            [path, "version"], capture_output=True, timeout=_ADB_CONNECT_TIMEOUT_S
+            [path, "version"],
+            capture_output=True,
+            timeout=_ADB_CONNECT_TIMEOUT_S,
+            creationflags=_no_window_flags(),
         )
         return result.returncode == 0
     except (OSError, subprocess.TimeoutExpired):
@@ -218,7 +231,12 @@ def find_adb_executable() -> str | None:
 def _run_adb(adb_path: str, args: list[str], *, timeout: float = _ADB_CMD_TIMEOUT_S) -> bytes:
     """Run an adb command, raising DeviceError on failure."""
     try:
-        result = subprocess.run([adb_path, *args], capture_output=True, timeout=timeout)
+        result = subprocess.run(
+            [adb_path, *args],
+            capture_output=True,
+            timeout=timeout,
+            creationflags=_no_window_flags(),
+        )
     except FileNotFoundError as exc:
         raise DeviceNotFoundError(
             f"adb executable not found: {adb_path}. Install Android platform-tools "

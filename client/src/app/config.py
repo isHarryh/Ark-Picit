@@ -12,6 +12,8 @@ from qfluentwidgets import (
     qconfig,
 )
 
+from src.app.dist import default_api_server
+
 
 class AppConfig(QConfig):
     """Holds all persistent user preferences."""
@@ -29,7 +31,7 @@ class AppConfig(QConfig):
     )
 
     # API (explore server)
-    exploreServerUrl = ConfigItem("API", "ExploreServerUrl", "http://127.0.0.1:7999")
+    exploreServerUrl = ConfigItem("API", "ExploreServerUrl", default_api_server())
     exploreToken = ConfigItem("API", "ExploreToken", "")
     exploreClientToken = ConfigItem("API", "ExploreClientToken", "")
     announcementHash = ConfigItem("API", "AnnouncementHash", "")
