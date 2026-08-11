@@ -18,7 +18,7 @@ _CN_2026_AUG_COLORS = [
     # green
     "C2DA72", "6C6E00", "B19155", "A98F74",
     # brown
-    "A38C26", "3F2B12", "74491F", "534658",
+    "AA9228", "3F2B12", "74491F", "534658",
     # dark blue / purple
     "2A2446", "394599", "5A459D", "BAA3D7",
     # light blue / grey-blue

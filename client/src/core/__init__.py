@@ -8,7 +8,7 @@ from src.core.color import (
     rgb_to_hex,
 )
 from src.core.pic import ArkPic
-from src.core.rule import MAX_COLORS, MAX_SIZE, ArkPicRule, color_hash, rule_hash
+from src.core.rule import MAX_COLORS, MAX_SIZE, ArkPicRule, rule_hash
 from src.core.rulesets import ALL_RULESETS, RuleCN2026Aug
 
 __all__ = [
@@ -19,7 +19,6 @@ __all__ = [
     "DecodedPic",
     "MAX_COLORS",
     "MAX_SIZE",
-    "color_hash",
     "rule_hash",
     "encode",
     "decode",

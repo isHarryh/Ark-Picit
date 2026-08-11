@@ -11,7 +11,7 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
-from .codec import MAX_CONTENT_CHARS
+from .code import MAX_CONTENT_CHARS
 from .models import ALL_STATUSES
 
 DATA_DIR = Path.cwd() / "data" / "arkpicit_server_v1"

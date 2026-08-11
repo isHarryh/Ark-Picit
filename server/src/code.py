@@ -5,11 +5,13 @@ mapping pixel IDs to real colors requires a ruleset and stays a client concern.
 
 Wire format (before compression)::
 
-    [U8 w][U8 h][U16 hash]
+    "APC\\x01"          magic "APC" + U8 version (1)
+    [U8 w][U8 h]        canvas dimensions
+    [U8 colors_len][\\x00]  palette size + one reserved zero byte
+    [U16 colors_hash]   CRC-16/CCITT of the palette (colors only)
     [U8 name_len][name_bytes...]
     [U8 desc_len][desc_bytes...]
-    [U8 * (w*h)]
-    [0x00]
+    [U8 * (w*h)]        flattened pixel color ids, row-major, all non-zero
 """
 
 from __future__ import annotations
@@ -19,9 +21,10 @@ import struct
 import zlib
 from dataclasses import dataclass
 
-_HEADER_FMT = ">BBH"
-_HEADER_SIZE = 4
-_TERMINATOR = b"\x00"
+_MAGIC = b"APC"
+_VERSION = 1
+_HEADER_FMT = ">3sBBBBH"
+_HEADER_SIZE = struct.calcsize(_HEADER_FMT)
 MAX_CONTENT_CHARS = 200_000  # encoded content field size limit
 _MAX_UNCOMPRESSED = 512 * 1024  # decompression bomb guard
 
@@ -58,18 +61,21 @@ def parse_code(code: str, max_length: int = MAX_CONTENT_CHARS) -> ParsedCode:
     if len(raw) < _HEADER_SIZE + 1:
         raise CodeError(f"Data too short: {len(raw)} bytes")
 
-    width, height, _hash = struct.unpack(_HEADER_FMT, raw[:_HEADER_SIZE])
+    magic, version, width, height, colors_len, _hash = struct.unpack(
+        _HEADER_FMT, raw[:_HEADER_SIZE]
+    )
+    if magic != _MAGIC or version != _VERSION:
+        raise CodeError(f"Unsupported magic or version: {magic!r}/{version}")
     if width < 1 or height < 1:
         raise CodeError(f"Invalid dimensions: {width}x{height}")
+    if colors_len < 1:
+        raise CodeError(f"Invalid palette size: {colors_len}")
 
     offset = _HEADER_SIZE
     name, offset = _unpack_varstring(raw, offset)
     description, offset = _unpack_varstring(raw, offset)
 
-    if raw[-1:] != _TERMINATOR:
-        raise CodeError("Missing or invalid terminator byte")
-
-    body = raw[offset:-1]
+    body = raw[offset:]
     expected = width * height
     if len(body) != expected:
         raise CodeError(f"Pixel count mismatch: expected {expected}, got {len(body)}")

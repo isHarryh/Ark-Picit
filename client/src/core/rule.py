@@ -12,21 +12,15 @@ MAX_SIZE = 255
 MAX_COLORS = 255
 
 
-def rule_hash(colors: list[str], default_color_id: int) -> int:
-    """Compute a deterministic Uint16 hash (CRC-16/CCITT) of the rule.
+def rule_hash(colors: list[str]) -> int:
+    """Compute a deterministic Uint16 hash (CRC-16/CCITT) of the palette.
 
     The palette is canonicalized (normalized + uppercased) before hashing so
-    that ``["ff0000"]`` and ``["FF0000"]`` produce the same hash.
-    The ``default_color_id`` is included so changing it yields a different hash.
+    that ``["ff0000"]`` and ``["FF0000"]`` produce the same hash. Only the
+    colors participate; the default color id does not.
     """
     normalized = [normalize_hex(c) for c in colors]
-    payload = f"{default_color_id}:" + "".join(normalized)
-    return binascii.crc_hqx(payload.encode("ascii"), 0xFFFF)
-
-
-# Backward-compatible alias (without default_color_id, for testing)
-def color_hash(colors: list[str]) -> int:
-    return rule_hash(colors, 1)
+    return binascii.crc_hqx("".join(normalized).encode("ascii"), 0xFFFF)
 
 
 class ArkPicRule:
@@ -67,8 +61,8 @@ class ArkPicRule:
 
     @property
     def color_hash(self) -> int:
-        """Uint16 hash of the rule (palette + default), used in ArkPicCode."""
-        return rule_hash(self.colors, self.default_color_id)
+        """Uint16 hash of the palette, used in ArkPicCode."""
+        return rule_hash(self.colors)
 
     def color_id_of(self, hex_color: str) -> int:
         """Return the 1-based ID for *hex_color*, or 0 if not in the palette."""

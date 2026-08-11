@@ -11,7 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session
 
 from ... import config, db
-from ...codec import CodeError, parse_code
+from ...code import CodeError, parse_code
 from ...errors import ApiError
 from ...models import (
     ALL_STATUSES,

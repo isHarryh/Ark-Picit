@@ -2,15 +2,17 @@
 
 Wire format (before compression)::
 
-    [U8 w][U8 h][U16 hash]
+    "APC\\x01"          magic "APC" + U8 version (1)
+    [U8 w][U8 h]        canvas dimensions
+    [U8 colors_len][\\x00]  palette size + one reserved zero byte
+    [U16 colors_hash]   CRC-16/CCITT of the palette (colors only)
     [U8 name_len][name_bytes...]
     [U8 desc_len][desc_bytes...]
-    [U8 * (w*h)]
-    [0x00]
+    [U8 * (w*h)]        flattened pixel color ids, row-major, all non-zero
 
-The ``hash`` is the CRC-16/CCITT of the ArkPicRule (palette + default id).
-Name and description are UTF-8 encoded, each prefixed with a U8 length (0-255).
-All pixel IDs are >= 1 (no empty pixels).
+The ``colors_hash`` is the CRC-16/CCITT of the rule's palette (the default
+color id does not participate). Name and description are UTF-8 encoded, each
+prefixed with a U8 length (0-255). All pixel IDs are >= 1 (no empty pixels).
 """
 
 from __future__ import annotations
@@ -22,9 +24,10 @@ import zlib
 from src.core.pic import ArkPic
 from src.core.rule import ArkPicRule
 
-_HEADER_FMT = ">BBH"
-_HEADER_SIZE = 4
-_TERMINATOR = b"\x00"
+_MAGIC = b"APC"
+_VERSION = 1
+_HEADER_FMT = ">3sBBBBH"
+_HEADER_SIZE = struct.calcsize(_HEADER_FMT)
 
 
 class CodeError(ValueError):
@@ -85,11 +88,19 @@ def encode(pic: ArkPic, name: str = "", description: str = "") -> str:
         if not (1 <= cid <= 255):
             raise CodeError(f"Pixel id {cid} out of Uint8 range at index {i}")
 
-    header = struct.pack(_HEADER_FMT, rule.width, rule.height, rule.color_hash)
+    header = struct.pack(
+        _HEADER_FMT,
+        _MAGIC,
+        _VERSION,
+        rule.width,
+        rule.height,
+        len(rule.colors),
+        rule.color_hash,
+    )
     name_bytes = _pack_varstring(name)
     desc_bytes = _pack_varstring(description)
     body = bytes(ids)
-    raw = header + name_bytes + desc_bytes + body + _TERMINATOR
+    raw = header + name_bytes + desc_bytes + body
     compressed = zlib.compress(raw, 9)
     return base64.urlsafe_b64encode(compressed).decode("ascii")
 
@@ -110,7 +121,11 @@ def decode(code: str, rule: ArkPicRule) -> DecodedPic:
     if len(raw) < _HEADER_SIZE + 1:
         raise CodeError(f"Data too short: {len(raw)} bytes")
 
-    width, height, stored_hash = struct.unpack(_HEADER_FMT, raw[:_HEADER_SIZE])
+    magic, version, width, height, colors_len, stored_hash = struct.unpack(
+        _HEADER_FMT, raw[:_HEADER_SIZE]
+    )
+    if magic != _MAGIC or version != _VERSION:
+        raise CodeError(f"Unsupported magic or version: {magic!r}/{version}")
 
     if width != rule.width or height != rule.height:
         raise CodeMismatchError(
@@ -125,7 +140,7 @@ def decode(code: str, rule: ArkPicRule) -> DecodedPic:
             },
         )
 
-    if stored_hash != rule.color_hash:
+    if colors_len != len(rule.colors) or stored_hash != rule.color_hash:
         raise CodeMismatchError(
             f"Rule hash mismatch: code has 0x{stored_hash:04X}, "
             f"rule has 0x{rule.color_hash:04X}",
@@ -141,11 +156,8 @@ def decode(code: str, rule: ArkPicRule) -> DecodedPic:
     name, offset = _unpack_varstring(raw, offset)
     description, offset = _unpack_varstring(raw, offset)
 
-    # Remaining: pixel body + terminator
-    if raw[-1:] != _TERMINATOR:
-        raise CodeError("Missing or invalid terminator byte")
-
-    body = raw[offset:-1]
+    # Remaining: pixel body
+    body = raw[offset:]
     expected_pixels = width * height
     if len(body) != expected_pixels:
         raise CodeError(

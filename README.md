@@ -72,14 +72,14 @@ python main.py --server        # 如需启动 API 服务端
 一个 ArkPicRule 对象表示一套像素画规则，包括画幅尺寸、色板定义和默认色。
 
 - 色板中的颜色为十六进制字符串（"RRGGBB" 格式），ID 从 1 开始计算，最多支持 255 种颜色。
-- 规则哈希用于高效比较两套像素画规则是否一致，参与运算的元素是色板中的所有颜色值以及默认色 ID。
+- 色板哈希用于高效比较两套像素画的颜色规则是否一致，仅由色板中的所有颜色值参与计算。
 
 ```
 ArkPicRule
   ├── width / height    画幅尺寸 (1-255)
   ├── colors[]          色板
   ├── default_color_id  默认色 ID
-  └── color_hash        规则哈希 (CRC-16/CCITT)
+  └── color_hash        色板哈希 (CRC-16/CCITT)
 ```
 
 #### ArkPic
@@ -97,14 +97,16 @@ ArkPic
 ArkPicCode 是一种 URL Safe Base64 文本编码，用于分享画作。原始字节流先经过 zlib 压缩再编码，字节流的格式如下：
 
 ```
-[U8 width] [U8 height] [U16 rule_hash] // 画幅尺寸和规则哈希
+"APC\01" // 魔数和 U8 版本号
+[U8 width] [U8 height] // 画幅宽高尺寸
+[U8 color_len] "\00" // 色板长度值及一个保留零值
+[U16 color_hash] // 色板哈希值
 [U8 name_len] [name_bytes...] // 画作名称，UTF-8 编码，0-255 字节
 [U8 desc_len] [desc_bytes...] // 画作描述，UTF-8 编码，0-255 字节
-[U8 × (width × height)] // 平展后的像素颜色 ID，保证均为非零值
-[0x00] // 终止字节
+[U8 × (width × height)] // 平展后的像素颜色 ID，行优先，保证均为非零值
 ```
 
-解码程序需要拥有相同 `color_hash` 的 `ArkPicRule` 才能将像素 ID 映射回具体颜色，这保证了分享码在不同规则集之间不会混淆。
+解码程序需要拥有相同的色板哈希值的 `ArkPicRule` 才能将像素 ID 映射回具体颜色，这保证了分享码在不同规则集之间不会混淆。
 
 ### 目录结构
 
