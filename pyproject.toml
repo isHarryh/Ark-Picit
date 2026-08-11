@@ -1,10 +1,8 @@
 [project]
 name = "ark-picit"
-version = "0.1.0"
+version = "1.0.0"
 description = "Arknights Pixel Art Painter"
-authors = [
-    { name = "Harry Huang", email = "harryhuang2652@qq.com" }
-]
+authors = [{ name = "Harry Huang", email = "harryhuang2652@qq.com" }]
 license = "BSD-3-Clause"
 requires-python = ">=3.12,<3.13"
 dependencies = [
