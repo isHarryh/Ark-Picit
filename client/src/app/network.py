@@ -8,7 +8,10 @@ from typing import Callable
 from PySide6.QtCore import QObject, QTimer, QUrl
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 
+from src.app.dist import app_version
+
 _TIMEOUT_MS = 15000
+_USER_AGENT = f"ArkPicit/{app_version()}"
 
 
 class HttpResult:
@@ -62,6 +65,7 @@ class NetworkClient(QObject):
         """Send *method* to *url*; *on_done* receives the HttpResult."""
         request = QNetworkRequest(QUrl(url))
         request.setHeader(QNetworkRequest.KnownHeaders.ContentTypeHeader, "application/json")
+        request.setRawHeader(b"User-Agent", _USER_AGENT.encode("ascii"))
         for key, value in (headers or {}).items():
             request.setRawHeader(key.encode("ascii"), value.encode("ascii"))
 

@@ -257,9 +257,13 @@ class PlazaClient(QObject):
     # ------------------------------------------------------------------
 
     def warmup(self) -> None:
-        """Start the startup meta request (idempotent)."""
+        """Start the startup meta request (idempotent).
+
+        The first handshake carries ``is_start=1`` so the server can record
+        a visit for this launch.
+        """
         if not self._meta_ok and not self._meta_in_flight:
-            self._start_meta()
+            self._start_meta(is_start=True)
 
     def _ensure_meta(self, on_done: Callable[[bool], None]) -> None:
         if self._meta_ok:
@@ -269,9 +273,9 @@ class PlazaClient(QObject):
         if not self._meta_in_flight:
             self._start_meta()
 
-    def _start_meta(self) -> None:
+    def _start_meta(self, is_start: bool = False) -> None:
         self._meta_in_flight = True
-        self.fetch_handshake(self._finish_meta)
+        self.fetch_handshake(self._finish_meta, is_start=is_start)
 
     def _finish_meta(self, result: HttpResult) -> None:
         self._meta_in_flight = False
@@ -282,8 +286,17 @@ class PlazaClient(QObject):
         for waiter in waiters:
             waiter(result.ok)
 
-    def fetch_handshake(self, on_done: Callable[[HttpResult], None]) -> None:
-        """GET the handshake; stores the issued client token and checks the API version."""
+    def fetch_handshake(
+        self,
+        on_done: Callable[[HttpResult], None],
+        *,
+        is_start: bool = False,
+    ) -> None:
+        """GET the handshake; stores the issued client token and checks the API version.
+
+        *is_start* marks the launch handshake (``?is_start=1``), which the
+        server uses to record an activity visit.
+        """
         reason = self._guard_reason()
         if reason is not None:
             self._reject(on_done, reason)
@@ -303,9 +316,10 @@ class PlazaClient(QObject):
                     self._disable(NetworkDisabledReason.VERSION_MISMATCH)
             on_done(result)
 
+        suffix = "?is_start=1" if is_start else ""
         self._net.request_json(
             "GET",
-            self.base_url() + "/api/meta/handshake",
+            self.base_url() + "/api/meta/handshake" + suffix,
             headers=headers,
             on_done=_handle,
         )

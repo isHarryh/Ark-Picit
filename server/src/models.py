@@ -76,3 +76,18 @@ class Announcement(SQLModel, table=True):
     id: int = Field(default=1, primary_key=True)
     content: str = Field(default="[]")
     updated_at: datetime = Field(default_factory=datetime.now)
+
+
+class Visit(SQLModel, table=True):
+    """One app launch, recorded by the handshake carrying ``is_start=1``.
+
+    ``ua`` is the client's User-Agent truncated to 32 characters; it may be
+    empty when the header is absent.
+    """
+
+    __tablename__ = "visits"
+
+    id: int | None = Field(default=None, primary_key=True)
+    ip: str = Field(index=True)
+    ua: str = Field(default="", max_length=32)
+    created_at: datetime = Field(default_factory=datetime.now)
