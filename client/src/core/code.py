@@ -26,7 +26,7 @@ from src.core.rule import ArkPicRule
 
 _MAGIC = b"APC"
 _VERSION = 1
-_HEADER_FMT = ">3sBBBBH"
+_HEADER_FMT = ">3sBBBBBH"
 _HEADER_SIZE = struct.calcsize(_HEADER_FMT)
 
 
@@ -95,6 +95,7 @@ def encode(pic: ArkPic, name: str = "", description: str = "") -> str:
         rule.width,
         rule.height,
         len(rule.colors),
+        0,  # reserved zero byte
         rule.color_hash,
     )
     name_bytes = _pack_varstring(name)
@@ -121,7 +122,7 @@ def decode(code: str, rule: ArkPicRule) -> DecodedPic:
     if len(raw) < _HEADER_SIZE + 1:
         raise CodeError(f"Data too short: {len(raw)} bytes")
 
-    magic, version, width, height, colors_len, stored_hash = struct.unpack(
+    magic, version, width, height, colors_len, _reserved, stored_hash = struct.unpack(
         _HEADER_FMT, raw[:_HEADER_SIZE]
     )
     if magic != _MAGIC or version != _VERSION:

@@ -23,7 +23,7 @@ from dataclasses import dataclass
 
 _MAGIC = b"APC"
 _VERSION = 1
-_HEADER_FMT = ">3sBBBBH"
+_HEADER_FMT = ">3sBBBBBH"
 _HEADER_SIZE = struct.calcsize(_HEADER_FMT)
 MAX_CONTENT_CHARS = 200_000  # encoded content field size limit
 _MAX_UNCOMPRESSED = 512 * 1024  # decompression bomb guard
@@ -61,7 +61,7 @@ def parse_code(code: str, max_length: int = MAX_CONTENT_CHARS) -> ParsedCode:
     if len(raw) < _HEADER_SIZE + 1:
         raise CodeError(f"Data too short: {len(raw)} bytes")
 
-    magic, version, width, height, colors_len, _hash = struct.unpack(
+    magic, version, width, height, colors_len, _reserved, _hash = struct.unpack(
         _HEADER_FMT, raw[:_HEADER_SIZE]
     )
     if magic != _MAGIC or version != _VERSION:

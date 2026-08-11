@@ -115,8 +115,17 @@ class PaintingCard(HeaderCardWidget):
         from src.gui.dialogs.code_dialog import CodeDialog
 
         pic, _ = stored.to_ark_pic()
-        code = encode(pic, stored.name, stored.description)
-        dialog = CodeDialog(code, self.window(), readonly=True)
+        code_with_meta = encode(pic, stored.name, stored.description)
+        code_without_meta = encode(pic)
+        dialog = CodeDialog(code_with_meta, self.window(), readonly=True,
+                            include_metadata_default=True)
+
+        # Live-update the text when the metadata checkbox toggles
+        if dialog.metaCheckbox:
+            def _on_toggle(checked: bool):
+                dialog.textEdit.setText(code_with_meta if checked else code_without_meta)
+            dialog.metaCheckbox.toggled.connect(_on_toggle)
+
         dialog.exec()
 
     def _publish(self) -> None:
