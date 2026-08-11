@@ -2,8 +2,9 @@
 
 The dialog opens immediately with a loading state; discovered candidates
 populate it asynchronously. ADB devices are listed in an "ADB Devices"
-group at the top, followed by "Recommended Windows" and "Other Windows".
-Empty groups show an empty-state hint instead of being removed.
+group at the top, followed by the "Recommended Windows" group (windows
+whose title suggests the game). Empty groups show an empty-state hint
+instead of being removed.
 """
 
 from PySide6.QtCore import QCoreApplication, QRectF, Qt
@@ -23,6 +24,7 @@ from qfluentwidgets import FluentIcon as FIF
 from src.app.device_manager import DeviceCandidate, deviceManager
 from src.app.i18n import fmt
 from src.auto import DeviceKind
+from src.utils.win_admin import is_admin, relaunch_as_admin
 
 _browsing = False
 
@@ -129,9 +131,7 @@ class DeviceDialog(MessageBoxBase):
 
     def _populate(self, candidates: list[DeviceCandidate]) -> None:
         adbs = [c for c in candidates if c.kind is DeviceKind.ADB]
-        windows = [c for c in candidates if c.kind is DeviceKind.WIN32]
-        recommended = [c for c in windows if _is_recommended(c)]
-        others = [c for c in windows if not _is_recommended(c)]
+        recommended = [c for c in candidates if _is_recommended(c)]
 
         self._add_group(
             self.tr("AdbDevicesGroup"), adbs,
@@ -140,10 +140,6 @@ class DeviceDialog(MessageBoxBase):
         self._add_group(
             self.tr("RecommendedWindowsGroup"), recommended,
             self.tr("NoGameWindowEmpty"),
-        )
-        self._add_group(
-            self.tr("OtherWindowsGroup"), others,
-            self.tr("NoOtherWindowsEmpty"),
         )
 
         for row in range(self.listWidget.count()):
@@ -193,6 +189,23 @@ class DeviceDialog(MessageBoxBase):
         return item.data(Qt.ItemDataRole.UserRole)
 
 
+class AdminRequiredDialog(MessageBoxBase):
+    """Warn that the Windows controller requires administrator privileges.
+
+    Offers to relaunch the application elevated (UAC) or cancel; the
+    connection is aborted in either case.
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.widget.setMinimumWidth(440)
+        self.viewLayout.setSpacing(12)
+        self.viewLayout.addWidget(SubtitleLabel(self.tr("AdminRequiredTitle")))
+        self.viewLayout.addWidget(BodyLabel(self.tr("AdminRequiredTip")))
+        self.yesButton.setText(self.tr("RestartAsAdminButton"))
+        self.cancelButton.setText(self.tr("CancelButton"))
+
+
 def browse_and_connect(parent: QWidget, on_connected=None) -> None:
     """Open the browse dialog immediately and populate it as discovery finishes.
 
@@ -200,7 +213,9 @@ def browse_and_connect(parent: QWidget, on_connected=None) -> None:
     as soon as the (slow) window/adb scan completes. Notifications
     (connection result or failure) are shown as InfoBars on *parent*.
     *on_connected* is invoked with the connected device after a successful
-    connection.
+    connection. Connecting a Windows window requires administrator
+    privileges: without them a warning dialog offers to relaunch the
+    application elevated (UAC) or cancel.
     """
     global _browsing
     if _browsing:
@@ -266,5 +281,13 @@ def browse_and_connect(parent: QWidget, on_connected=None) -> None:
     candidate = dialog.selected_candidate if accepted else None
     if candidate is None:
         _cleanup()
+        return
+    if candidate.kind is DeviceKind.WIN32 and not is_admin():
+        _cleanup()
+        warning = AdminRequiredDialog(parent=parent)
+        if warning.exec() and relaunch_as_admin():
+            instance = QCoreApplication.instance()
+            if instance is not None:
+                instance.quit()
         return
     deviceManager.connect(candidate)

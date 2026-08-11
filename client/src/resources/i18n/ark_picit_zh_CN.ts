@@ -2,6 +2,29 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="zh_CN" sourcelanguage="en_US">
 <context>
+    <name>AdminRequiredDialog</name>
+    <message>
+        <location filename="../../gui/dialogs/device_dialog.py" line="+204"/>
+        <source>AdminRequiredTip</source>
+        <translation>您需要以管理员身份运行此程序才可以使用 Windows 控制器。是否立即切换到管理员身份？</translation>
+    </message>
+    <message>
+        <location line="-1"/>
+        <source>AdminRequiredTitle</source>
+        <translation>需要管理员权限</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>CancelButton</source>
+        <translation>取消</translation>
+    </message>
+    <message>
+        <location line="-1"/>
+        <source>RestartAsAdminButton</source>
+        <translation>重启应用</translation>
+    </message>
+</context>
+<context>
     <name>AnnouncementDialog</name>
     <message>
         <location filename="../../gui/pages/settings_page.py" line="+113"/>
@@ -384,17 +407,17 @@
 <context>
     <name>DeviceDialog</name>
     <message>
-        <location filename="../../gui/dialogs/device_dialog.py" line="+137"/>
+        <location filename="../../gui/dialogs/device_dialog.py" line="-68"/>
         <source>AdbDevicesGroup</source>
         <translation>ADB 设备</translation>
     </message>
     <message>
-        <location line="+115"/>
+        <location line="+130"/>
         <source>AdbUnauthorizedTip</source>
         <translation>请在设备或模拟器上接受调试授权提示，然后重试。</translation>
     </message>
     <message>
-        <location line="-150"/>
+        <location line="-163"/>
         <source>CancelButton</source>
         <translation>取消</translation>
     </message>
@@ -404,7 +427,7 @@
         <translation>连接</translation>
     </message>
     <message>
-        <location line="+139"/>
+        <location line="+152"/>
         <source>ConnectedTip</source>
         <translation>已连接到 %1</translation>
     </message>
@@ -424,7 +447,7 @@
         <translation>控制器</translation>
     </message>
     <message>
-        <location line="-97"/>
+        <location line="-112"/>
         <source>NoAdbDevicesEmpty</source>
         <translation>未找到 ADB 设备。请先启动模拟器。</translation>
     </message>
@@ -434,22 +457,12 @@
         <translation>未找到游戏窗口。请先启动游戏。</translation>
     </message>
     <message>
-        <location line="+4"/>
-        <source>NoOtherWindowsEmpty</source>
-        <translation>未找到其他窗口。</translation>
-    </message>
-    <message>
         <location line="-1"/>
-        <source>OtherWindowsGroup</source>
-        <translation>其他 Windows 窗口</translation>
-    </message>
-    <message>
-        <location line="-4"/>
         <source>RecommendedWindowsGroup</source>
         <translation>建议的 Windows 窗口</translation>
     </message>
     <message>
-        <location line="-18"/>
+        <location line="-16"/>
         <source>SearchFailedTitle</source>
         <translation>无法搜索控制器</translation>
     </message>

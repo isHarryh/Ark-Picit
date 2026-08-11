@@ -2,6 +2,29 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="en_US" sourcelanguage="en_US">
 <context>
+    <name>AdminRequiredDialog</name>
+    <message>
+        <location filename="../../gui/dialogs/device_dialog.py" line="+204"/>
+        <source>AdminRequiredTip</source>
+        <translation>You need to run this program as an administrator to use the Windows controller. Switch to administrator mode now?</translation>
+    </message>
+    <message>
+        <location line="-1"/>
+        <source>AdminRequiredTitle</source>
+        <translation>Administrator privileges required</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>CancelButton</source>
+        <translation>Cancel</translation>
+    </message>
+    <message>
+        <location line="-1"/>
+        <source>RestartAsAdminButton</source>
+        <translation>Restart App</translation>
+    </message>
+</context>
+<context>
     <name>AnnouncementDialog</name>
     <message>
         <location filename="../../gui/pages/settings_page.py" line="+113"/>
@@ -384,17 +407,17 @@
 <context>
     <name>DeviceDialog</name>
     <message>
-        <location filename="../../gui/dialogs/device_dialog.py" line="+137"/>
+        <location filename="../../gui/dialogs/device_dialog.py" line="-68"/>
         <source>AdbDevicesGroup</source>
         <translation>ADB Devices</translation>
     </message>
     <message>
-        <location line="+115"/>
+        <location line="+130"/>
         <source>AdbUnauthorizedTip</source>
         <translation>Accept the debugging authorization prompt on the device or in the emulator, then try again.</translation>
     </message>
     <message>
-        <location line="-150"/>
+        <location line="-163"/>
         <source>CancelButton</source>
         <translation>Cancel</translation>
     </message>
@@ -404,7 +427,7 @@
         <translation>Connect</translation>
     </message>
     <message>
-        <location line="+139"/>
+        <location line="+152"/>
         <source>ConnectedTip</source>
         <translation>Connected to %1</translation>
     </message>
@@ -424,7 +447,7 @@
         <translation>controller</translation>
     </message>
     <message>
-        <location line="-97"/>
+        <location line="-112"/>
         <source>NoAdbDevicesEmpty</source>
         <translation>No ADB devices found. Start an emulator first.</translation>
     </message>
@@ -434,22 +457,12 @@
         <translation>No game window found. Start the game first.</translation>
     </message>
     <message>
-        <location line="+4"/>
-        <source>NoOtherWindowsEmpty</source>
-        <translation>No other windows found.</translation>
-    </message>
-    <message>
         <location line="-1"/>
-        <source>OtherWindowsGroup</source>
-        <translation>Other Windows</translation>
-    </message>
-    <message>
-        <location line="-4"/>
         <source>RecommendedWindowsGroup</source>
         <translation>Recommended Windows</translation>
     </message>
     <message>
-        <location line="-18"/>
+        <location line="-16"/>
         <source>SearchFailedTitle</source>
         <translation>Unable to search for controllers</translation>
     </message>
