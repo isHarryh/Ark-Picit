@@ -20,7 +20,6 @@ from qfluentwidgets import (
     IndeterminateProgressBar,
     PushButton,
     StrongBodyLabel,
-    SubtitleLabel,
     TitleLabel,
     isDarkTheme,
 )
@@ -34,6 +33,7 @@ from src.app.plaza import SORT_OPTIONS, STATUS_COUNT, plaza, sort_label, status_
 from src.core.preview import generate_preview
 from src.core.rulesets import decode_any_ruleset
 from src.gui.components.base_page import BasePage
+from src.gui.components.empty_state import EmptyStateWidget
 from src.gui.dialogs.explore_dialog import ExploreDetailDialog
 
 _PAGE_SIZE = 20
@@ -298,8 +298,9 @@ class ExplorePage(BasePage):
         self.progress.setVisible(False)
         self.viewLayout.addWidget(self.progress)
 
-        self.emptyLabel = SubtitleLabel(self.tr("NoArtworksEmpty"))
-        self.viewLayout.addWidget(self.emptyLabel)
+        self.emptyState = EmptyStateWidget()
+        self.emptyState.setVisible(False)
+        self.viewLayout.addWidget(self.emptyState)
 
         self.flow = FlowLayout()
         self.viewLayout.addLayout(self.flow)
@@ -378,6 +379,7 @@ class ExplorePage(BasePage):
         plaza.clear_admin_changes()
         self._pending = True
         self.progress.setVisible(True)
+        self.emptyState.setVisible(False)
         self.refreshBtn.setEnabled(False)
         self._start_cooldown()
         view = self._view
@@ -422,10 +424,12 @@ class ExplorePage(BasePage):
         self.progress.setVisible(False)
         self.refreshBtn.setEnabled(self._view.mode == "admin" or self._cooldown is None)
         if not result.ok:
-            self.emptyLabel.setText(
-                fmt(self.tr("LoadFailedTip"), localize_http_error(result))
+            self.emptyState.set_state(
+                FIF.CANCEL,
+                self.tr("ExploreUnavailableTitle"),
+                hint=localize_http_error(result),
             )
-            self.emptyLabel.setVisible(True)
+            self.emptyState.setVisible(True)
             self._clear_cards()
             return
 
@@ -436,8 +440,12 @@ class ExplorePage(BasePage):
             "can_manage": data.get("can_manage", False),
         }
         artworks = data.get("artworks", [])
-        self.emptyLabel.setText(self.tr("NoArtworksEmpty"))
-        self.emptyLabel.setVisible(not artworks)
+        self.emptyState.set_state(
+            FIF.GLOBE,
+            self.tr("NoArtworksEmpty"),
+            hint=self.tr("NoArtworksPublishTip"),
+        )
+        self.emptyState.setVisible(not artworks)
         self._update_page_combo(len(artworks) == _PAGE_SIZE)
         self._rebuild_cards(artworks)
 

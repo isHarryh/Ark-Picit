@@ -6,7 +6,8 @@
     <message>
         <location filename="../../gui/dialogs/device_dialog.py" line="+204"/>
         <source>AdminRequiredTip</source>
-        <translation>You need to run this program as an administrator to use the Windows controller. Switch to administrator mode now?</translation>
+        <translation>You need to run this program as an administrator to use the Windows controller.
+Switch to administrator mode now?</translation>
     </message>
     <message>
         <location line="-1"/>
@@ -27,7 +28,7 @@
 <context>
     <name>AnnouncementDialog</name>
     <message>
-        <location filename="../../gui/pages/settings_page.py" line="+113"/>
+        <location filename="../../gui/pages/settings_page.py" line="+114"/>
         <location line="+6"/>
         <source>AnnouncementsTitle</source>
         <translation>Announcements</translation>
@@ -686,18 +687,22 @@
         <translation>Explore</translation>
     </message>
     <message>
-        <location line="+168"/>
-        <source>LoadFailedTip</source>
-        <translation>Failed to load artworks: %1</translation>
+        <location line="+169"/>
+        <source>ExploreUnavailableTitle</source>
+        <translation>Explore is currently unavailable</translation>
     </message>
     <message>
-        <location line="-125"/>
-        <location line="+138"/>
+        <location line="+16"/>
         <source>NoArtworksEmpty</source>
         <translation>No artworks on this server yet</translation>
     </message>
     <message>
-        <location line="-148"/>
+        <location line="+1"/>
+        <source>NoArtworksPublishTip</source>
+        <translation>You can publish your own artworks from your gallery.</translation>
+    </message>
+    <message>
+        <location line="-153"/>
         <source>OrderAscending</source>
         <translation>Ascending</translation>
     </message>
@@ -775,7 +780,7 @@
         <translation>Backup</translation>
     </message>
     <message>
-        <location line="+50"/>
+        <location line="+56"/>
         <source>BackupExportedTitle</source>
         <translation>Backup exported</translation>
     </message>
@@ -806,12 +811,17 @@
         <translation>Export failed</translation>
     </message>
     <message>
-        <location line="-55"/>
+        <location line="-61"/>
         <source>GalleryTitle</source>
         <translation>Gallery</translation>
     </message>
     <message>
-        <location line="+30"/>
+        <location line="+140"/>
+        <source>GoToCreateButton</source>
+        <translation>Go to Create</translation>
+    </message>
+    <message>
+        <location line="-104"/>
         <location line="+36"/>
         <source>ImportBackupAction</source>
         <translation>Import Backup</translation>
@@ -842,23 +852,22 @@
         <translation>The backup contains no gallery files.</translation>
     </message>
     <message>
-        <location line="-74"/>
-        <location line="+117"/>
+        <location line="+45"/>
         <source>NoPaintingsEmpty</source>
         <translation>No paintings yet. Create one!</translation>
     </message>
     <message>
-        <location line="-43"/>
+        <location line="-45"/>
         <source>NoPaintingsTitle</source>
         <translation>No paintings found</translation>
     </message>
     <message>
-        <location line="+46"/>
+        <location line="+52"/>
         <source>NoSearchMatchesEmpty</source>
         <translation>No paintings match your search</translation>
     </message>
     <message>
-        <location line="-92"/>
+        <location line="-98"/>
         <source>NothingToBackupTip</source>
         <translation>Nothing to back up.</translation>
     </message>
@@ -879,7 +888,7 @@
         </translation>
     </message>
     <message>
-        <location line="-53"/>
+        <location line="-59"/>
         <source>RefreshButton</source>
         <translation>Refresh</translation>
     </message>
@@ -889,7 +898,7 @@
         <translation>Search by name or description</translation>
     </message>
     <message>
-        <location line="+64"/>
+        <location line="+70"/>
         <source>ZipAllFilter</source>
         <translation>ZIP archives (*.zip);;All files (*)</translation>
     </message>
@@ -1035,7 +1044,7 @@
 <context>
     <name>PaintingCard</name>
     <message>
-        <location filename="../../gui/pages/gallery_page.py" line="-112"/>
+        <location filename="../../gui/pages/gallery_page.py" line="-118"/>
         <location line="+44"/>
         <source>CancelButton</source>
         <translation>Cancel</translation>
@@ -1119,7 +1128,8 @@
     <message>
         <location line="-3"/>
         <source>UploadRightsTip</source>
-        <translation>Uploading means you grant the community usage rights to this artwork. You may credit yourself in the artwork description before uploading. Uploaded content may take some time to become publicly visible after review.</translation>
+        <translation>Uploading means you grant the community usage rights to this artwork. You may credit yourself in the artwork description before uploading.
+Uploaded content will be publicly visible only after review.</translation>
     </message>
 </context>
 <context>
@@ -1566,12 +1576,12 @@ Click a button above to begin.</translation>
     <message>
         <location line="-16"/>
         <source>ErrorCanvasAnchorsNotFound</source>
-        <translation>Canvas anchors not found on screen</translation>
+        <translation>Canvas anchors not found on screen, please open the canvas in game</translation>
     </message>
     <message>
         <location line="-1"/>
         <source>ErrorCanvasSliderNotFound</source>
-        <translation>Canvas scale slider not found on screen</translation>
+        <translation>Canvas scale slider not found on screen, please open the canvas in game</translation>
     </message>
     <message>
         <location line="+9"/>
@@ -1661,7 +1671,7 @@ Click a button above to begin.</translation>
     <message>
         <location line="+9"/>
         <source>ErrorTooManyRequests</source>
-        <translation>Too many requests. Please try again later.</translation>
+        <translation>Too many requests from your IP. Please try again later.</translation>
     </message>
     <message>
         <location line="-21"/>

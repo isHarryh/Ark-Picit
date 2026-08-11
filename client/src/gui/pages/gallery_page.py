@@ -16,7 +16,6 @@ from qfluentwidgets import (
     RoundMenu,
     SearchLineEdit,
     SplitPushButton,
-    SubtitleLabel,
     TitleLabel,
 )
 from qfluentwidgets import (
@@ -27,6 +26,7 @@ from src.app.i18n import fmt, localize_http_error
 from src.app.signal_bus import signalBus
 from src.core import storage
 from src.gui.components.base_page import BasePage
+from src.gui.components.empty_state import EmptyStateWidget
 from src.gui.dialogs.rename_dialog import RenameDialog
 
 
@@ -208,13 +208,19 @@ class GalleryPage(BasePage):
         header.addWidget(self.backupBtn)
         self.viewLayout.addLayout(header)
 
-        self.emptyListLabel = SubtitleLabel(self.tr("NoPaintingsEmpty"))
-        self.viewLayout.addWidget(self.emptyListLabel)
+        self.emptyState = EmptyStateWidget()
+        self.emptyState.actionBtn.clicked.connect(self._go_create)
+        self.viewLayout.addWidget(self.emptyState)
 
         self.cardsLayout = QVBoxLayout()
         self.cardsLayout.setSpacing(8)
         self.viewLayout.addLayout(self.cardsLayout)
         self.viewLayout.addStretch()
+
+    def _go_create(self) -> None:
+        """Switch to the create page."""
+        window = self.window()
+        window.switchTo(window.createPage)
 
     def _connect_signals(self) -> None:
         self.searchEdit.textChanged.connect(self._filter)
@@ -325,10 +331,17 @@ class GalleryPage(BasePage):
             if matches:
                 visible += 1
         if self.cardsLayout.count() == 0:
-            self.emptyListLabel.setText(self.tr("NoPaintingsEmpty"))
-            self.emptyListLabel.setVisible(True)
+            self.emptyState.set_state(
+                FIF.ALBUM,
+                self.tr("NoPaintingsEmpty"),
+                button_text=self.tr("GoToCreateButton"),
+                button_icon=FIF.EDIT,
+            )
+            self.emptyState.setVisible(True)
         elif visible == 0:
-            self.emptyListLabel.setText(self.tr("NoSearchMatchesEmpty"))
-            self.emptyListLabel.setVisible(True)
+            self.emptyState.set_state(
+                FIF.SEARCH, self.tr("NoSearchMatchesEmpty")
+            )
+            self.emptyState.setVisible(True)
         else:
-            self.emptyListLabel.setVisible(False)
+            self.emptyState.setVisible(False)

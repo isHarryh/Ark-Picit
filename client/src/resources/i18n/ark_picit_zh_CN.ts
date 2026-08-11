@@ -6,7 +6,8 @@
     <message>
         <location filename="../../gui/dialogs/device_dialog.py" line="+204"/>
         <source>AdminRequiredTip</source>
-        <translation>您需要以管理员身份运行此程序才可以使用 Windows 控制器。是否立即切换到管理员身份？</translation>
+        <translation>您需要以管理员身份运行此程序才可以使用 Windows 控制器。
+是否立即切换到管理员身份？</translation>
     </message>
     <message>
         <location line="-1"/>
@@ -27,7 +28,7 @@
 <context>
     <name>AnnouncementDialog</name>
     <message>
-        <location filename="../../gui/pages/settings_page.py" line="+113"/>
+        <location filename="../../gui/pages/settings_page.py" line="+114"/>
         <location line="+6"/>
         <source>AnnouncementsTitle</source>
         <translation>公告</translation>
@@ -117,7 +118,7 @@
         <location filename="../../app/plaza.py" line="+76"/>
         <source>StatusNormal</source>
         <extracomment>Protocol keys sent to the plaza API; never translated. Semantic catalog keys for protocol labels (the English text lives in the translation catalogs; the key is the TS source).</extracomment>
-        <translation>正常展示</translation>
+        <translation>正常展示中</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -127,7 +128,7 @@
     <message>
         <location line="-1"/>
         <source>StatusRemovedByUser</source>
-        <translation>用户已移除</translation>
+        <translation>用户主动删除</translation>
     </message>
     <message>
         <location line="-1"/>
@@ -686,18 +687,22 @@
         <translation>探索</translation>
     </message>
     <message>
-        <location line="+168"/>
-        <source>LoadFailedTip</source>
-        <translation>加载作品失败：%1</translation>
+        <location line="+169"/>
+        <source>ExploreUnavailableTitle</source>
+        <translation>探索功能目前不可用</translation>
     </message>
     <message>
-        <location line="-125"/>
-        <location line="+138"/>
+        <location line="+16"/>
         <source>NoArtworksEmpty</source>
         <translation>此服务器上还没有作品</translation>
     </message>
     <message>
-        <location line="-148"/>
+        <location line="+1"/>
+        <source>NoArtworksPublishTip</source>
+        <translation>您可在画廊中选择您的作品发布。</translation>
+    </message>
+    <message>
+        <location line="-153"/>
         <source>OrderAscending</source>
         <translation>升序</translation>
     </message>
@@ -775,7 +780,7 @@
         <translation>备份</translation>
     </message>
     <message>
-        <location line="+50"/>
+        <location line="+56"/>
         <source>BackupExportedTitle</source>
         <translation>备份已导出</translation>
     </message>
@@ -806,12 +811,17 @@
         <translation>导出失败</translation>
     </message>
     <message>
-        <location line="-55"/>
+        <location line="-61"/>
         <source>GalleryTitle</source>
         <translation>画廊</translation>
     </message>
     <message>
-        <location line="+30"/>
+        <location line="+140"/>
+        <source>GoToCreateButton</source>
+        <translation>前往创作</translation>
+    </message>
+    <message>
+        <location line="-104"/>
         <location line="+36"/>
         <source>ImportBackupAction</source>
         <translation>导入备份</translation>
@@ -842,23 +852,22 @@
         <translation>备份中不包含画廊文件。</translation>
     </message>
     <message>
-        <location line="-74"/>
-        <location line="+117"/>
+        <location line="+45"/>
         <source>NoPaintingsEmpty</source>
         <translation>还没有画作。创建一幅吧！</translation>
     </message>
     <message>
-        <location line="-43"/>
+        <location line="-45"/>
         <source>NoPaintingsTitle</source>
         <translation>未找到画作</translation>
     </message>
     <message>
-        <location line="+46"/>
+        <location line="+52"/>
         <source>NoSearchMatchesEmpty</source>
         <translation>没有与搜索内容匹配的画作</translation>
     </message>
     <message>
-        <location line="-92"/>
+        <location line="-98"/>
         <source>NothingToBackupTip</source>
         <translation>没有可备份的内容。</translation>
     </message>
@@ -877,7 +886,7 @@
         </translation>
     </message>
     <message>
-        <location line="-53"/>
+        <location line="-59"/>
         <source>RefreshButton</source>
         <translation>刷新</translation>
     </message>
@@ -887,7 +896,7 @@
         <translation>按名称或描述搜索</translation>
     </message>
     <message>
-        <location line="+64"/>
+        <location line="+70"/>
         <source>ZipAllFilter</source>
         <translation>ZIP 压缩包 (*.zip);;所有文件 (*)</translation>
     </message>
@@ -1033,7 +1042,7 @@
 <context>
     <name>PaintingCard</name>
     <message>
-        <location filename="../../gui/pages/gallery_page.py" line="-112"/>
+        <location filename="../../gui/pages/gallery_page.py" line="-118"/>
         <location line="+44"/>
         <source>CancelButton</source>
         <translation>取消</translation>
@@ -1117,7 +1126,8 @@
     <message>
         <location line="-3"/>
         <source>UploadRightsTip</source>
-        <translation>上传即表示你授予社区该作品的使用权。你可以在上传前在作品描述中署名。上传内容审核通过后可能需要一些时间才会公开展示。</translation>
+        <translation>上传即表示你授予社区该作品的使用权。你可以在上传前在作品描述中署名。
+上传内容仅在审核通过后才会公开展示。</translation>
     </message>
 </context>
 <context>
@@ -1130,7 +1140,7 @@
     <message>
         <location line="+3"/>
         <source>ReasonNotWritable</source>
-        <translation>不可写（例如位于无权限的 Program Files 内）</translation>
+        <translation>没有写入权限（例如位于无权限的 Program Files 内）</translation>
     </message>
     <message>
         <location line="-1"/>
@@ -1189,27 +1199,27 @@
     <message>
         <location line="-84"/>
         <source>SpeedFastFormat</source>
-        <translation>快（%1 毫秒）</translation>
+        <translation>快（%1 ms）</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>SpeedNormalFormat</source>
-        <translation>正常（%1 毫秒）</translation>
+        <translation>正常（%1 ms）</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>SpeedSlowFormat</source>
-        <translation>慢（%1 毫秒）</translation>
+        <translation>慢（%1 ms）</translation>
     </message>
     <message>
         <location line="-3"/>
         <source>SpeedVeryFastFormat</source>
-        <translation>极快（%1 毫秒）</translation>
+        <translation>极快（%1 ms）</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>SpeedVerySlowFormat</source>
-        <translation>极慢（%1 毫秒）</translation>
+        <translation>极慢（%1 ms）</translation>
     </message>
     <message>
         <location line="+111"/>
@@ -1352,7 +1362,7 @@
         <location line="-2"/>
         <location line="+51"/>
         <source>LanguageCardTitle</source>
-        <translation>语言</translation>
+        <translation>语言 / Language</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -1385,7 +1395,7 @@
     <message>
         <location filename="../../gui/dialogs/smart_create_dialog.py" line="+121"/>
         <source>AspectLabel</source>
-        <translation>比例：</translation>
+        <translation>宽高比：</translation>
     </message>
     <message>
         <location line="+66"/>
@@ -1440,7 +1450,7 @@
     <message>
         <location line="-5"/>
         <source>ColorsLabel</source>
-        <translation>颜色：</translation>
+        <translation>选色法：</translation>
     </message>
     <message>
         <location line="+31"/>
@@ -1511,7 +1521,7 @@
     <message>
         <location line="-3"/>
         <source>SamplingLabel</source>
-        <translation>采样：</translation>
+        <translation>采样法：</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -1530,7 +1540,7 @@
     <message>
         <location filename="../../app/i18n.py" line="-30"/>
         <source>AllColorsPaintedTip</source>
-        <translation>所有颜色已绘制</translation>
+        <translation>所有颜色均已绘制</translation>
     </message>
     <message>
         <location line="-4"/>
@@ -1565,12 +1575,12 @@
     <message>
         <location line="-16"/>
         <source>ErrorCanvasAnchorsNotFound</source>
-        <translation>未在当前屏幕中找到画布锚点</translation>
+        <translation>未在当前屏幕中找到画布锚点，请您打开游戏内作画页面</translation>
     </message>
     <message>
         <location line="-1"/>
         <source>ErrorCanvasSliderNotFound</source>
-        <translation>未在当前屏幕中找到缩放滑块</translation>
+        <translation>未在当前屏幕中找到缩放滑块，请您打开游戏内作画页面</translation>
     </message>
     <message>
         <location line="+9"/>
@@ -1660,7 +1670,7 @@
     <message>
         <location line="+9"/>
         <source>ErrorTooManyRequests</source>
-        <translation>请求过于频繁，请稍后重试。</translation>
+        <translation>您的 IP 发起的请求过于频繁，请稍后再试。</translation>
     </message>
     <message>
         <location line="-21"/>
