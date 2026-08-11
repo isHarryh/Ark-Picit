@@ -6,7 +6,7 @@ group at the top, followed by "Recommended Windows" and "Other Windows".
 Empty groups show an empty-state hint instead of being removed.
 """
 
-from PySide6.QtCore import QRectF, Qt
+from PySide6.QtCore import QCoreApplication, QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QListWidget, QListWidgetItem, QStackedWidget, QVBoxLayout, QWidget
 from qfluentwidgets import (
@@ -21,15 +21,12 @@ from qfluentwidgets import (
 from qfluentwidgets import FluentIcon as FIF
 
 from src.app.device_manager import DeviceCandidate, deviceManager
+from src.app.i18n import fmt
 from src.auto import DeviceKind
 
 _browsing = False
 
 RECOMMENDED_KEYWORDS = ("明日方舟", "arknights")
-
-_EMPTY_ADB = "No adb devices found. Start an emulator first."
-_EMPTY_RECOMMENDED = "No game window found. Start the game first."
-_EMPTY_OTHERS = "No other windows found."
 
 
 def _smartphone_icon() -> QIcon:
@@ -70,7 +67,7 @@ class DeviceDialog(MessageBoxBase):
         super().__init__(parent)
         self.widget.setMinimumWidth(460)
         self.viewLayout.setSpacing(12)
-        self.viewLayout.addWidget(SubtitleLabel("Select a controller to connect"))
+        self.viewLayout.addWidget(SubtitleLabel(self.tr("SelectControllerTitle")))
 
         # List and loading state share the same area, so switching between
         # them does not reflow the dialog layout.
@@ -82,9 +79,9 @@ class DeviceDialog(MessageBoxBase):
 
         self._progress = IndeterminateProgressRing(self, start=False)
         self._progress.setFixedSize(32, 32)
-        self._loadingTitle = BodyLabel("Searching for controllers", self)
+        self._loadingTitle = BodyLabel(self.tr("SearchingDevicesTitle"), self)
         self._loadingTitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._hint = CaptionLabel("Checking Windows and adb devices...", self)
+        self._hint = CaptionLabel(self.tr("SearchingDevicesTip"), self)
         self._hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._hint.setWordWrap(True)
         self._loadingPage = QWidget(self)
@@ -101,8 +98,8 @@ class DeviceDialog(MessageBoxBase):
 
         self.viewLayout.addWidget(self._stack)
 
-        self.yesButton.setText("Connect")
-        self.cancelButton.setText("Cancel")
+        self.yesButton.setText(self.tr("ConnectButton"))
+        self.cancelButton.setText(self.tr("CancelButton"))
         self.listWidget.itemDoubleClicked.connect(lambda _item: self.accept())
 
         if candidates is None:
@@ -123,7 +120,7 @@ class DeviceDialog(MessageBoxBase):
         """Replace the loading state with a discovery error message."""
         self._progress.stop()
         self._progress.hide()
-        self._loadingTitle.setText("Unable to search for controllers")
+        self._loadingTitle.setText(self.tr("SearchFailedTitle"))
         self._hint.setText(message)
 
     def validate(self) -> bool:
@@ -136,9 +133,18 @@ class DeviceDialog(MessageBoxBase):
         recommended = [c for c in windows if _is_recommended(c)]
         others = [c for c in windows if not _is_recommended(c)]
 
-        self._add_group("ADB Devices", adbs, _EMPTY_ADB)
-        self._add_group("Recommended Windows", recommended, _EMPTY_RECOMMENDED)
-        self._add_group("Other Windows", others, _EMPTY_OTHERS)
+        self._add_group(
+            self.tr("AdbDevicesGroup"), adbs,
+            self.tr("NoAdbDevicesEmpty"),
+        )
+        self._add_group(
+            self.tr("RecommendedWindowsGroup"), recommended,
+            self.tr("NoGameWindowEmpty"),
+        )
+        self._add_group(
+            self.tr("OtherWindowsGroup"), others,
+            self.tr("NoOtherWindowsEmpty"),
+        )
 
         for row in range(self.listWidget.count()):
             item = self.listWidget.item(row)
@@ -226,9 +232,12 @@ def browse_and_connect(parent: QWidget, on_connected=None) -> None:
     def _on_connected(device) -> None:
         _cleanup()
         candidate = deviceManager.candidate
+        label = candidate.label if candidate else QCoreApplication.translate(
+            "DeviceDialog", "ControllerWord"
+        )
         InfoBar.success(
-            "Controller connected",
-            f"Connected to {candidate.label if candidate else 'controller'}",
+            QCoreApplication.translate("DeviceDialog", "ConnectedTitle"),
+            fmt(QCoreApplication.translate("DeviceDialog", "ConnectedTip"), label),
             parent=parent,
             duration=3000,
         )
@@ -239,10 +248,13 @@ def browse_and_connect(parent: QWidget, on_connected=None) -> None:
         _cleanup()
         if "unauthorized" in message:
             message = (
-                f"{message}. Accept the debugging authorization prompt on the device "
-                "or in the emulator, then try again."
+                f"{message}. "
+                + QCoreApplication.translate("DeviceDialog", "AdbUnauthorizedTip")
             )
-        InfoBar.error("Connection failed", message, parent=parent, duration=6000)
+        InfoBar.error(
+            QCoreApplication.translate("DeviceDialog", "ConnectionFailedTitle"),
+            message, parent=parent, duration=6000,
+        )
 
     deviceManager.discoveryFinished.connect(_on_discovered)
     deviceManager.discoveryFailed.connect(_on_discovery_failed)

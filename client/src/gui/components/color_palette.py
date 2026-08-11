@@ -70,7 +70,7 @@ class ColorPalette(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(8)
 
-        layout.addWidget(StrongBodyLabel("Palette"))
+        layout.addWidget(StrongBodyLabel(self.tr("PaletteTitle")))
 
         # Swatch grid
         scroll = QScrollArea()

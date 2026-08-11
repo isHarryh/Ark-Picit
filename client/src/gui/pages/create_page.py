@@ -25,12 +25,14 @@ from qfluentwidgets import (
     FluentIcon as FIF,
 )
 
+from src.app.i18n import fmt, localize_message
 from src.app.signal_bus import signalBus
-from src.core import ArkPic, ArkPicRule, CodeError, decode, encode, storage
+from src.core import ArkPic, ArkPicRule, CodeError, CodeMismatchError, decode, encode, storage
 from src.core.rulesets import ALL_RULESETS, RuleCN2026Aug
 from src.gui.components.base_page import BasePage
 from src.gui.components.color_palette import ColorPalette
 from src.gui.components.pixel_canvas import PixelCanvas
+from src.utils.user_message import UserMessage
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +41,7 @@ class CreatePage(BasePage):
     """Page for creating, editing, importing and exporting paintings."""
 
     _canvasImported = Signal(object)  # ArkPic read from the game
-    _canvasImportFailed = Signal(str)  # error message
+    _canvasImportFailed = Signal(object)  # UserMessage error
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -64,14 +66,14 @@ class CreatePage(BasePage):
     def _build_ui(self) -> None:
         # --- Action bar (top) ---
         actions = QHBoxLayout()
-        self.btnNew = PushButton(FIF.ADD, "New")
-        self.btnSave = PrimarySplitPushButton(FIF.SAVE, "Save", self)
+        self.btnNew = PushButton(FIF.ADD, self.tr("NewButton"))
+        self.btnSave = PrimarySplitPushButton(FIF.SAVE, self.tr("SaveButton"), self)
         self._setup_save_menu()
-        self.btnExport = PushButton(FIF.SHARE, "Export Code")
-        self.btnImport = SplitPushButton(FIF.DOWNLOAD, "Import", self)
+        self.btnExport = PushButton(FIF.SHARE, self.tr("ExportCodeButton"))
+        self.btnImport = SplitPushButton(FIF.DOWNLOAD, self.tr("ImportButton"), self)
         self._setup_import_menu()
-        self.btnSmart = PrimaryPushButton(FIF.PHOTO, "Smart Create")
-        self.btnGamePaint = PrimaryPushButton(FIF.BRUSH, "Auto Paint in Game")
+        self.btnSmart = PrimaryPushButton(FIF.PHOTO, self.tr("SmartCreateButton"))
+        self.btnGamePaint = PrimaryPushButton(FIF.BRUSH, self.tr("AutoPaintButton"))
         actions.addWidget(self.btnNew)
         actions.addWidget(self.btnSmart)
         actions.addWidget(self.btnSave)
@@ -86,23 +88,26 @@ class CreatePage(BasePage):
         form.setHorizontalSpacing(8)
         form.setVerticalSpacing(8)
 
-        lbl_name = BodyLabel("Name:")
+        lbl_name = BodyLabel(self.tr("NameLabel"))
         lbl_name.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         self.nameEdit = LineEdit()
-        self.nameEdit.setPlaceholderText("Painting name")
+        self.nameEdit.setPlaceholderText(self.tr("PaintingNamePlaceholder"))
         self.nameEdit.setMaxLength(255)
 
-        lbl_ruleset = BodyLabel("Ruleset:")
+        lbl_ruleset = BodyLabel(self.tr("RulesetLabel"))
         lbl_ruleset.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         self.ruleCombo = ComboBox()
         for name, rule in ALL_RULESETS.items():
-            self.ruleCombo.addItem(f"{name}  ({rule.width}x{rule.height})", userData=name)
+            self.ruleCombo.addItem(
+                fmt(self.tr("RulesetFormat"), name, rule.width, rule.height),
+                userData=name,
+            )
         self.ruleCombo.currentIndexChanged.connect(self._on_ruleset_changed)
 
-        lbl_desc = BodyLabel("Description:")
+        lbl_desc = BodyLabel(self.tr("DescriptionLabel"))
         lbl_desc.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         self.descEdit = LineEdit()
-        self.descEdit.setPlaceholderText("Optional description")
+        self.descEdit.setPlaceholderText(self.tr("OptionalDescriptionPlaceholder"))
         self.descEdit.setMaxLength(255)
 
         form.addWidget(lbl_name, 0, 0)
@@ -125,7 +130,7 @@ class CreatePage(BasePage):
         tool_layout.setContentsMargins(0, 0, 4, 0)
         tool_layout.setSpacing(8)
 
-        tool_title = StrongBodyLabel("Tools")
+        tool_title = StrongBodyLabel(self.tr("ToolsTitle"))
         tool_layout.addWidget(tool_title)
 
         self.toolPaint = ToolButton(FIF.PENCIL_INK)
@@ -156,7 +161,7 @@ class CreatePage(BasePage):
 
         tool_layout.addSpacing(6)
 
-        self.toolClear = PushButton(FIF.DELETE, "Clear")
+        self.toolClear = PushButton(FIF.DELETE, self.tr("ClearButton"))
         self.toolClear.clicked.connect(self._on_clear)
         tool_layout.addWidget(self.toolClear)
 
@@ -203,7 +208,7 @@ class CreatePage(BasePage):
 
     def _setup_save_menu(self) -> None:
         """Attach the Save As action to the Save button's drop-down menu."""
-        action = QAction(FIF.SAVE_AS.icon(), "Save As", self)
+        action = QAction(FIF.SAVE_AS.icon(), self.tr("SaveAsAction"), self)
         action.triggered.connect(self._on_save_as)
         menu = RoundMenu(parent=self)
         menu.addAction(action)
@@ -213,12 +218,12 @@ class CreatePage(BasePage):
         """Attach the import actions to the Import button's drop-down menu."""
         menu = RoundMenu(parent=self)
         menu.addAction(
-            QAction(FIF.CODE.icon(), "Import From Code", self, triggered=self._on_import_code)
+            QAction(FIF.CODE.icon(), self.tr("ImportFromCodeAction"), self, triggered=self._on_import_code)
         )
         menu.addAction(
             QAction(
                 FIF.BRUSH.icon(),
-                "Import From Game Canvas",
+                self.tr("ImportFromGameAction"),
                 self,
                 triggered=self._on_import_game_canvas,
             )
@@ -301,13 +306,12 @@ class CreatePage(BasePage):
         """Start a fresh painting, asking for confirmation when unsaved work exists."""
         if self._has_unsaved_changes():
             box = MessageBox(
-                "New painting?",
-                "The current painting has unsaved changes. "
-                "Start a new painting anyway?",
+                self.tr("NewPaintingTitle"),
+                self.tr("NewPaintingTip"),
                 self.window(),
             )
-            box.yesButton.setText("New")
-            box.cancelButton.setText("Cancel")
+            box.yesButton.setText(self.tr("NewButton"))
+            box.cancelButton.setText(self.tr("CancelButton"))
             if not box.exec():
                 return
         self._new_painting()
@@ -317,8 +321,11 @@ class CreatePage(BasePage):
             return
         stored = storage.load(pic_id)
         if stored is None:
-            InfoBar.error("Load failed", f"Painting {pic_id} not found.",
-                          parent=self, duration=3000)
+            InfoBar.error(
+                self.tr("LoadFailedTitle"),
+                fmt(self.tr("PaintingNotFoundTip"), pic_id),
+                parent=self, duration=3000,
+            )
             return
         self._stored_id = stored.id
         pic, rule = stored.to_ark_pic()
@@ -378,8 +385,8 @@ class CreatePage(BasePage):
         name = self.nameEdit.text().strip()
         if not name:
             InfoBar.warning(
-                "Name missing",
-                "Please enter a name before saving.",
+                self.tr("NameMissingTitle"),
+                self.tr("NameMissingTip"),
                 parent=self, position=InfoBarPosition.TOP, duration=3000,
             )
             return
@@ -409,8 +416,11 @@ class CreatePage(BasePage):
         self._update_save_state()
         self.ruleCombo.setEnabled(False)
         signalBus.paintingSaved.emit()
-        InfoBar.success("Saved", f"'{stored.name}' saved to gallery.",
-                        parent=self, position=InfoBarPosition.TOP, duration=2000)
+        InfoBar.success(
+            self.tr("SavedTitle"),
+            fmt(self.tr("PaintingSavedTip"), stored.name),
+            parent=self, position=InfoBarPosition.TOP, duration=2000,
+        )
 
     def _on_save(self) -> None:
         self._do_save(force_new=False)
@@ -434,7 +444,14 @@ class CreatePage(BasePage):
             code_with_meta = encode(self._pic, name, desc)
             code_without_meta = encode(self._pic)
         except CodeError as e:
-            InfoBar.error("Export failed", str(e), parent=self, duration=3000)
+            # Encoding failures indicate corrupted painting data; show the
+            # generic message with the raw Python error passed through.
+            unparsable = self.tr("ErrorCodeUnparsable")
+            InfoBar.error(
+                self.tr("ExportFailedTitle"),
+                f"{unparsable}\n{e}",
+                parent=self, duration=3000,
+            )
             return
 
         # Show with metadata by default
@@ -465,8 +482,24 @@ class CreatePage(BasePage):
         """Decode *code* and load the painting into the editor."""
         try:
             result = decode(code, self._rule)
+        except CodeMismatchError as e:
+            # Structurally valid code with a different canvas size or palette:
+            # localize the mismatch details.
+            InfoBar.error(
+                self.tr("ImportFailedTitle"),
+                localize_message(UserMessage(e.code, e.params, str(e))),
+                parent=self, duration=3000,
+            )
+            return
         except CodeError as e:
-            InfoBar.error("Import failed", str(e), parent=self, duration=3000)
+            # Malformed/corrupted/oversized code: show a generic message and
+            # pass the raw Python error through without localizing it.
+            unparsable = self.tr("ErrorCodeUnparsable")
+            InfoBar.error(
+                self.tr("ImportFailedTitle"),
+                f"{unparsable}\n{e}",
+                parent=self, duration=3000,
+            )
             return
 
         if not self._confirm_overwrite_current():
@@ -485,8 +518,10 @@ class CreatePage(BasePage):
             if result.description:
                 self.descEdit.setText(result.description)
         self._rebuild_canvas()
-        InfoBar.success("Imported", "Painting loaded from code.",
-                        parent=self, duration=2000)
+        InfoBar.success(
+            self.tr("ImportedTitle"), self.tr("CodeImportedTip"),
+            parent=self, duration=2000,
+        )
 
     def _confirm_overwrite_current(self) -> bool:
         """Confirm replacing the current canvas when it has unsaved changes.
@@ -497,12 +532,12 @@ class CreatePage(BasePage):
         if not self._has_unsaved_changes():
             return True
         box = MessageBox(
-            "Overwrite current canvas?",
-            "The current painting has unsaved changes. Continue anyway?",
+            self.tr("OverwriteCanvasTitle"),
+            self.tr("OverwriteCanvasTip"),
             self.window(),
         )
-        box.yesButton.setText("Overwrite")
-        box.cancelButton.setText("Cancel")
+        box.yesButton.setText(self.tr("OverwriteButton"))
+        box.cancelButton.setText(self.tr("CancelButton"))
         return box.exec()
 
     def _on_import_game_canvas(self) -> None:
@@ -519,7 +554,7 @@ class CreatePage(BasePage):
     def _import_canvas_with(self, device) -> None:
         """Start the canvas import in a worker thread."""
         InfoBar.info(
-            "Importing", "Reading the in-game canvas...",
+            self.tr("ImportingTitle"), self.tr("ReadingCanvasTip"),
             parent=self, position=InfoBarPosition.TOP, duration=2000,
         )
         self.btnImport.button.setEnabled(False)
@@ -534,10 +569,10 @@ class CreatePage(BasePage):
             pic = read_game_canvas(automator, self._rule)
             self._canvasImported.emit(pic)
         except GameTaskError as exc:
-            self._canvasImportFailed.emit(str(exc))
+            self._canvasImportFailed.emit(UserMessage(exc.code, exc.params, str(exc)))
         except Exception as exc:
             logger.exception("In-game canvas import failed")
-            self._canvasImportFailed.emit(str(exc))
+            self._canvasImportFailed.emit(UserMessage("task.generic", {}, str(exc)))
 
     @Slot(object)
     def _apply_imported_canvas(self, pic: ArkPic) -> None:
@@ -551,13 +586,18 @@ class CreatePage(BasePage):
         self.nameEdit.clear()
         self.descEdit.clear()
         self._rebuild_canvas()
-        InfoBar.success("Imported", "Canvas loaded from the game.",
-                        parent=self, duration=3000)
+        InfoBar.success(
+            self.tr("ImportedTitle"), self.tr("CanvasImportedTip"),
+            parent=self, duration=3000,
+        )
 
-    @Slot(str)
-    def _show_import_error(self, message: str) -> None:
+    @Slot(object)
+    def _show_import_error(self, message: UserMessage) -> None:
         self.btnImport.button.setEnabled(True)
-        InfoBar.error("Import failed", message, parent=self, duration=5000)
+        InfoBar.error(
+            self.tr("ImportFailedTitle"), localize_message(message),
+            parent=self, duration=5000,
+        )
 
     def _on_smart_create(self) -> None:
         from src.gui.dialogs.smart_create_dialog import SmartCreateDialog
@@ -571,8 +611,8 @@ class CreatePage(BasePage):
                 self._saved_snapshot = None
                 self._rebuild_canvas()
                 InfoBar.success(
-                    "Smart Create",
-                    "Pixel art generated. Adjust as needed, then Save.",
+                    self.tr("SmartCreateButton"),
+                    self.tr("SmartCreateDoneTip"),
                     parent=self, position=InfoBarPosition.TOP, duration=3000,
                 )
 

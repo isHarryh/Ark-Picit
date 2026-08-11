@@ -41,9 +41,9 @@ class CodeDialog(MessageBoxBase):
 
         # Title — use SubtitleLabel for proper native sizing
         if self._readonly:
-            layout.addWidget(SubtitleLabel("Copy the ArkPicCode to share"))
+            layout.addWidget(SubtitleLabel(self.tr("CopyCodeTitle")))
         else:
-            layout.addWidget(SubtitleLabel("Input the ArkPicCode to import"))
+            layout.addWidget(SubtitleLabel(self.tr("InputCodeTitle")))
 
         # Text area
         self.textEdit = TextEdit()
@@ -51,20 +51,20 @@ class CodeDialog(MessageBoxBase):
         self.textEdit.setReadOnly(self._readonly)
         self.textEdit.setMinimumHeight(140)
         if not self._readonly:
-            self.textEdit.setPlaceholderText("Paste ArkPicCode here...")
+            self.textEdit.setPlaceholderText(self.tr("PasteCodePlaceholder"))
         layout.addWidget(self.textEdit)
 
         # Export mode: checkbox to include metadata
         self.metaCheckbox: CheckBox | None = None
         if self._readonly:
-            self.metaCheckbox = CheckBox("Include name and description")
+            self.metaCheckbox = CheckBox(self.tr("IncludeMetadataLabel"))
             self.metaCheckbox.setChecked(include_meta)
             layout.addWidget(self.metaCheckbox)
-            self.yesButton.setText("Copy")
-            self.cancelButton.setText("Close")
+            self.yesButton.setText(self.tr("CopyButton"))
+            self.cancelButton.setText(self.tr("CloseButton"))
         else:
-            self.yesButton.setText("Import")
-            self.cancelButton.setText("Cancel")
+            self.yesButton.setText(self.tr("ImportButton"))
+            self.cancelButton.setText(self.tr("CancelButton"))
 
     def accept(self) -> None:
         """In export mode, copy to clipboard before accepting."""

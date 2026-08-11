@@ -5,6 +5,9 @@
         "qfluentwidgets"
     ],
     "editor.formatOnSave": true,
+    "files.associations": {
+        "*.ts": "qt-ts"
+    },
     "python.analysis.typeCheckingMode": "basic",
     "[python]": {
         "editor.defaultFormatter": "charliermarsh.ruff"

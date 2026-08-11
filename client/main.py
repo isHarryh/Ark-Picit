@@ -61,6 +61,15 @@ def run_client() -> None:
         font.setPointSize(9)
         app.setFont(font)
 
+    # Early translation pass: the path guard below runs before the config
+    # is loaded, so it follows the system locale. First import of
+    # qfluentwidgets prints a promo banner; mute stdout around it.
+    from PySide6.QtCore import QCoreApplication
+
+    with _MutedStdout():
+        from src.app import i18n
+        i18n.install_translators(app, i18n.resolve_language(i18n.LANG_SYSTEM))
+
     # Reject risky install locations before touching disk (mirrors MAA).
     from PySide6.QtWidgets import QMessageBox
     from src.utils import path_guard
@@ -75,15 +84,14 @@ def run_client() -> None:
 
     risky, reason = path_guard.risky_location(Path.cwd())
     if risky:
-        QMessageBox.critical(
-            None,
-            "Ark Picit",
-            "Ark Picit cannot start from an unsafe location.\n\n"
-            f"Current folder: {Path.cwd()}\n"
-            f"Reason: {path_guard.reason_text(reason)}.\n\n"
-            "Please move the program to a normal folder "
-            "(for example D:\\ArkPicit) and start it again.",
+        from src.app.i18n import fmt
+
+        body = fmt(
+            QCoreApplication.translate("PathGuard", "UnsafeLocationTip"),
+            Path.cwd(),
+            QCoreApplication.translate("PathGuard", path_guard.reason_text(reason)),
         )
+        QMessageBox.critical(None, "Ark Picit", body)
         sys.exit(1)
 
     ensure_runtime_dirs()
@@ -103,15 +111,14 @@ def run_client() -> None:
     config_path = CONFIG_DIR / "config.json"
     init_config(config_path)
 
-    # Fluent translator
-    from qfluentwidgets import FluentTranslator, setTheme
-
-    fluent_translator = FluentTranslator()
-    app.installTranslator(fluent_translator)
-
-    # Theme
+    # Install the translators for the configured language.
     from qfluentwidgets import qconfig
     from src.app.config import cfg
+    language = str(qconfig.get(cfg().language))
+    i18n.install_translators(app, i18n.resolve_language(language))
+
+    # Theme
+    from qfluentwidgets import setTheme
     theme_val = qconfig.get(cfg().themeMode)
     setTheme(theme_val)
 

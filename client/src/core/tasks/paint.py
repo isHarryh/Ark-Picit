@@ -15,6 +15,7 @@ from src.core.color import hex_to_bgr, rgb_to_hex
 from src.core.pic import ArkPic
 from src.core.rule import ArkPicRule
 from src.core.tasks.canvas import CanvasLayout, GameTaskError
+from src.utils.user_message import UserMessage
 
 PALETTE_WINDOW_SIZE = (32, 32)  # solid color template window
 PALETTE_COLOR_TOLERANCE = 5  # max per-channel distance from the target color
@@ -29,13 +30,15 @@ PALETTE_CLICK_HOLD_MS = 100  # hold the swatch press; games may miss instantaneo
 PALETTE_SELECT_DELAY_S = 0.25  # wait for the swatch selection to register
 CELL_CLICK_DELAY_MS = 67  # default pause between canvas cell clicks (Normal speed)
 
-_SKIP_MESSAGE = (
+SKIP_MESSAGE = UserMessage(
+    "task.canvas_already_matches",
+    {},
     "The in-game canvas already matches this painting. "
-    "Disable incremental mode to repaint."
+    "Disable incremental mode to repaint.",
 )
 
 
-def _noop(_message: str) -> None:
+def _noop(_message: UserMessage) -> None:
     return
 
 
@@ -48,8 +51,8 @@ def paint_canvas(
     incremental: bool,
     diff_cells: set[tuple[int, int]],
     click_delay_ms: int = CELL_CLICK_DELAY_MS,
-    report: Callable[[str], None] | None = None,
-) -> str:
+    report: Callable[[UserMessage], None] | None = None,
+) -> UserMessage:
     """Select each used palette color and click every cell of that color.
 
     With *incremental* enabled, only the cells in *diff_cells* are painted;
@@ -59,23 +62,28 @@ def paint_canvas(
     """
     notify = report or _noop
     if incremental and not diff_cells:
-        notify("Canvas already matches painting")
-        return _SKIP_MESSAGE
+        notify(UserMessage("task.canvas_already_matches"))
+        return SKIP_MESSAGE
     for color_id in sorted({cid for cid in pic.flat if cid > 0}):
         hex_color = rule.colors[color_id - 1]
         color_bgr = hex_to_bgr(hex_color)
-        notify(f"Selecting color #{hex_color}")
+        notify(UserMessage("task.selecting_color", {"color": f"#{hex_color}"}))
         match = _click_palette_color(automator, layout, color_bgr, notify)
         automator.click_match(match, hold_ms=PALETTE_CLICK_HOLD_MS)
         time.sleep(PALETTE_SELECT_DELAY_S)
 
         cells = _paint_cells_of_color(layout, pic, color_id, incremental, diff_cells)
-        notify(f"Painting {len(cells)} cells with #{hex_color}")
+        notify(
+            UserMessage(
+                "task.painting_cells",
+                {"count": len(cells), "color": f"#{hex_color}"},
+            )
+        )
         for region in cells:
             automator.click_region(region)
             time.sleep(click_delay_ms / 1000)
-    notify("Drawing complete")
-    return "All colors painted"
+    notify(UserMessage("task.drawing_complete"))
+    return UserMessage("task.all_colors_painted")
 
 
 def _paint_cells_of_color(
@@ -104,7 +112,7 @@ def _click_palette_color(
     automator: Automator,
     layout: CanvasLayout,
     color_bgr: tuple[int, int, int],
-    notify: Callable[[str], None],
+    notify: Callable[[UserMessage], None],
 ) -> MatchResult:
     """Find the *color_bgr* swatch in the palette, scrolling up then down as needed.
 
@@ -114,8 +122,8 @@ def _click_palette_color(
     if match is not None:
         return match
     for down, message in (
-        (False, "Palette color not visible, scrolling up..."),
-        (True, "Palette color still not visible, scrolling back down..."),
+        (False, UserMessage("task.palette_scrolling_up")),
+        (True, UserMessage("task.palette_scrolling_down")),
     ):
         notify(message)
         start, end = _palette_drag_points(layout, down=down)
@@ -125,7 +133,9 @@ def _click_palette_color(
         if match is not None:
             return match
     raise GameTaskError(
-        f"Color not found in palette: #{rgb_to_hex(color_bgr[2], color_bgr[1], color_bgr[0])}"
+        f"Color not found in palette: #{rgb_to_hex(color_bgr[2], color_bgr[1], color_bgr[0])}",
+        code="task.palette_color_not_found",
+        params={"color": f"#{rgb_to_hex(color_bgr[2], color_bgr[1], color_bgr[0])}"},
     )
 
 

@@ -7,7 +7,7 @@ import json
 from enum import Enum
 from typing import Callable
 
-from PySide6.QtCore import QObject, Signal
+from PySide6.QtCore import QCoreApplication, QObject, Signal
 from qfluentwidgets import qconfig
 
 from src.app.config import cfg
@@ -15,8 +15,29 @@ from src.app.network import HttpResult, NetworkClient
 
 API_VERSION = 1  # client API version; must match the server's meta "version"
 
+#: Protocol keys sent to the plaza API; never translated.
 REASONS = ("pornographic", "violent", "subversive", "abusive", "infringing", "other")
-STATUS_LABELS = ("Normal", "Reviewing", "Removed by user", "Removed by moderation")
+
+#: Semantic catalog keys for protocol labels (the English text lives in the
+#: translation catalogs; the key is the TS source).
+_STATUS_SOURCES = ("StatusNormal", "StatusReviewing", "StatusRemovedByUser", "StatusRemovedByModeration")
+STATUS_COUNT = len(_STATUS_SOURCES)
+_REASON_SOURCES = {
+    "pornographic": "ReasonPornographic",
+    "violent": "ReasonViolent",
+    "subversive": "ReasonSubversive",
+    "abusive": "ReasonAbusive",
+    "infringing": "ReasonInfringing",
+    "other": "ReasonOther",
+}
+_SORT_SOURCES = {
+    "created_at": "SortCreatedTime",
+    "updated_at": "SortUpdatedTime",
+    "positive_ratings": "SortThumbsUp",
+    "negative_ratings": "SortThumbsDown",
+    "reports_count": "SortReports",
+}
+
 DEFAULT_SORT = "created_at"
 SORT_OPTIONS = (
     "created_at",
@@ -25,6 +46,48 @@ SORT_OPTIONS = (
     "negative_ratings",
     "reports_count",
 )
+
+
+def status_label(status: int) -> str:
+    """Return the localized label for an artwork status code."""
+    if 0 <= status < len(_STATUS_SOURCES):
+        return QCoreApplication.translate("ArtworkStatus", _STATUS_SOURCES[status])
+    return str(status)
+
+
+def reason_label(reason: str) -> str:
+    """Return the localized label for a report reason key."""
+    source = _REASON_SOURCES.get(reason, reason)
+    return QCoreApplication.translate("ReportReason", source)
+
+
+def sort_label(sort_by: str) -> str:
+    """Return the localized label for a sort key."""
+    source = _SORT_SOURCES.get(sort_by, sort_by)
+    return QCoreApplication.translate("ExploreSort", source)
+
+
+def _mark_label_sources() -> None:
+    """Keep the protocol label keys in the translation catalogs.
+
+    lupdate only extracts literal arguments; the keys above are repeated
+    here as literal ``translate()`` calls. Never executed.
+    """
+    QCoreApplication.translate("ArtworkStatus", "StatusNormal")
+    QCoreApplication.translate("ArtworkStatus", "StatusReviewing")
+    QCoreApplication.translate("ArtworkStatus", "StatusRemovedByUser")
+    QCoreApplication.translate("ArtworkStatus", "StatusRemovedByModeration")
+    QCoreApplication.translate("ReportReason", "ReasonPornographic")
+    QCoreApplication.translate("ReportReason", "ReasonViolent")
+    QCoreApplication.translate("ReportReason", "ReasonSubversive")
+    QCoreApplication.translate("ReportReason", "ReasonAbusive")
+    QCoreApplication.translate("ReportReason", "ReasonInfringing")
+    QCoreApplication.translate("ReportReason", "ReasonOther")
+    QCoreApplication.translate("ExploreSort", "SortCreatedTime")
+    QCoreApplication.translate("ExploreSort", "SortUpdatedTime")
+    QCoreApplication.translate("ExploreSort", "SortThumbsUp")
+    QCoreApplication.translate("ExploreSort", "SortThumbsDown")
+    QCoreApplication.translate("ExploreSort", "SortReports")
 
 
 class NetworkDisabledReason(Enum):

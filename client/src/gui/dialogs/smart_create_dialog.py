@@ -34,6 +34,7 @@ from qfluentwidgets import (
     FluentIcon as FIF,
 )
 
+from src.app.i18n import fmt
 from src.core.pic import ArkPic
 from src.core.quantize import quantize_image, render_preview_bgr
 from src.core.rule import ArkPicRule
@@ -58,7 +59,7 @@ class SmartCreateDialog(QDialog):
         self._cropped_bgr: np.ndarray | None = None
         self._result_pic: ArkPic | None = None
 
-        self.setWindowTitle("Smart Create")
+        self.setWindowTitle(self.tr("SmartCreateButton"))
         self.setMinimumSize(900, 600)
         self._build_ui()
 
@@ -72,7 +73,7 @@ class SmartCreateDialog(QDialog):
         root.setSpacing(16)
 
         # --- Title ---
-        self.titleLabel = TitleLabel("Smart Create")
+        self.titleLabel = TitleLabel(self.tr("SmartCreateButton"))
         root.addWidget(self.titleLabel)
 
         # --- Step 1: source selection ---
@@ -81,12 +82,12 @@ class SmartCreateDialog(QDialog):
         s1.setContentsMargins(0, 0, 0, 0)
         s1.setSpacing(16)
 
-        s1.addWidget(SubtitleLabel("Choose an image to convert"))
+        s1.addWidget(SubtitleLabel(self.tr("ChooseImageHint")))
 
         source_row = QHBoxLayout()
         source_row.setSpacing(8)
-        self.btnFile = PrimaryPushButton(FIF.FOLDER, "Choose File")
-        self.btnClipboard = PushButton(FIF.LINK, "From Clipboard")
+        self.btnFile = PrimaryPushButton(FIF.FOLDER, self.tr("ChooseFileButton"))
+        self.btnClipboard = PushButton(FIF.LINK, self.tr("FromClipboardButton"))
         source_row.addStretch()
         source_row.addWidget(self.btnFile)
         source_row.addWidget(self.btnClipboard)
@@ -96,7 +97,9 @@ class SmartCreateDialog(QDialog):
         self.sourcePreview = QLabel()
         self.sourcePreview.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.sourcePreview.setMinimumHeight(350)
-        self.sourcePreview.setText("No image selected.\nClick a button above to begin.")
+        self.sourcePreview.setText(
+            self.tr("NoImageSelectedTip")
+        )
         s1.addWidget(self.sourcePreview, 1)
 
         s1.addStretch()
@@ -112,13 +115,16 @@ class SmartCreateDialog(QDialog):
         left = QVBoxLayout()
         left.setSpacing(10)
 
-        left.addWidget(StrongBodyLabel("Crop"))
+        left.addWidget(StrongBodyLabel(self.tr("CropTitle")))
 
         ratio_row = QHBoxLayout()
-        ratio_row.addWidget(BodyLabel("Aspect:"))
+        ratio_row.addWidget(BodyLabel(self.tr("AspectLabel")))
         self.ratioCombo = ComboBox()
-        self.ratioCombo.addItem(f"Rule ({self._rule.width}:{self._rule.height})", userData="rule")
-        self.ratioCombo.addItem("Free", userData="free")
+        self.ratioCombo.addItem(
+            fmt(self.tr("RuleFormat"), self._rule.width, self._rule.height),
+            userData="rule",
+        )
+        self.ratioCombo.addItem(self.tr("FreeLabel"), userData="free")
         self.ratioCombo.currentIndexChanged.connect(self._on_ratio_changed)
         ratio_row.addWidget(self.ratioCombo)
         ratio_row.addStretch()
@@ -136,25 +142,25 @@ class SmartCreateDialog(QDialog):
         right = QVBoxLayout()
         right.setSpacing(10)
 
-        right.addWidget(StrongBodyLabel("Preview"))
+        right.addWidget(StrongBodyLabel(self.tr("PreviewTitle")))
 
         # Sampling and color matching options, one row of two columns
         options = QGridLayout()
         options.setHorizontalSpacing(8)
-        options.addWidget(BodyLabel("Sampling:"), 0, 0)
+        options.addWidget(BodyLabel(self.tr("SamplingLabel")), 0, 0)
         self.samplingCombo = ComboBox()
-        self.samplingCombo.addItem("Nearest", userData="nearest")
-        self.samplingCombo.addItem("Bilinear", userData="bilinear")
-        self.samplingCombo.addItem("Bicubic", userData="bicubic")
+        self.samplingCombo.addItem(self.tr("SamplingNearest"), userData="nearest")
+        self.samplingCombo.addItem(self.tr("SamplingBilinear"), userData="bilinear")
+        self.samplingCombo.addItem(self.tr("SamplingBicubic"), userData="bicubic")
         self.samplingCombo.setCurrentIndex(1)
         self.samplingCombo.currentIndexChanged.connect(self._on_option_changed)
         options.addWidget(self.samplingCombo, 0, 1)
-        options.addWidget(BodyLabel("Colors:"), 0, 2)
+        options.addWidget(BodyLabel(self.tr("ColorsLabel")), 0, 2)
         self.colorCombo = ComboBox()
-        self.colorCombo.addItem("RGB Linear", userData="rgb_linear")
-        self.colorCombo.addItem("RGB Squared", userData="rgb_squared")
-        self.colorCombo.addItem("Grayscale", userData="grayscale")
-        self.colorCombo.addItem("Voting", userData="voting")
+        self.colorCombo.addItem(self.tr("ColorRgbLinear"), userData="rgb_linear")
+        self.colorCombo.addItem(self.tr("ColorRgbSquared"), userData="rgb_squared")
+        self.colorCombo.addItem(self.tr("ColorGrayscale"), userData="grayscale")
+        self.colorCombo.addItem(self.tr("ColorVoting"), userData="voting")
         self.colorCombo.setCurrentIndex(1)
         self.colorCombo.currentIndexChanged.connect(self._on_option_changed)
         options.addWidget(self.colorCombo, 0, 3)
@@ -178,9 +184,9 @@ class SmartCreateDialog(QDialog):
         # --- Bottom action bar ---
         bottom = QHBoxLayout()
 
-        self.btnCancel = PushButton("Cancel")
-        self.btnBack = PushButton(FIF.LEFT_ARROW, "Change Image")
-        self.btnConfirm = PrimaryPushButton(FIF.ACCEPT, "Confirm")
+        self.btnCancel = PushButton(self.tr("CancelButton"))
+        self.btnBack = PushButton(FIF.LEFT_ARROW, self.tr("ChangeImageButton"))
+        self.btnConfirm = PrimaryPushButton(FIF.ACCEPT, self.tr("ConfirmButton"))
 
         bottom.addWidget(self.btnCancel)
         bottom.addStretch()
@@ -227,21 +233,22 @@ class SmartCreateDialog(QDialog):
 
     def _choose_file(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
-            self, "Choose Image", "",
-            "Images (*.png *.jpg *.jpeg *.bmp *.webp);;All files (*)",
+            self, self.tr("ChooseImageTitle"), "",
+            self.tr("ImageFilter"),
         )
         if not path:
             return
         img = cv2.imdecode(np.fromfile(path, dtype=np.uint8), cv2.IMREAD_COLOR)
         if img is None:
-            InfoBar.error("Error", "Failed to load image.", parent=self, duration=3000)
+            InfoBar.error(self.tr("ErrorTitle"), self.tr("ImageLoadFailedTip"),
+                          parent=self, duration=3000)
             return
         self._set_source(img)
 
     def _from_clipboard(self) -> None:
         bgr = get_clipboard_image_bgr()
         if bgr is None:
-            InfoBar.warning("Clipboard", "No image in clipboard.",
+            InfoBar.warning(self.tr("ClipboardTitle"), self.tr("NoClipboardImageTip"),
                             parent=self, position=InfoBarPosition.TOP, duration=2000)
             return
         self._set_source(bgr)

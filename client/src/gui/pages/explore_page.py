@@ -28,8 +28,9 @@ from qfluentwidgets import (
     FluentIcon as FIF,
 )
 
+from src.app.i18n import fmt, localize_http_error
 from src.app.network import HttpResult
-from src.app.plaza import STATUS_LABELS, plaza
+from src.app.plaza import SORT_OPTIONS, STATUS_COUNT, plaza, sort_label, status_label
 from src.core.preview import generate_preview
 from src.core.rulesets import decode_any_ruleset
 from src.gui.components.base_page import BasePage
@@ -38,14 +39,6 @@ from src.gui.dialogs.explore_dialog import ExploreDetailDialog
 _PAGE_SIZE = 20
 _CARD_WIDTH = 150
 _PREVIEW_SIZE = 112
-
-_SORT_LABELS = {
-    "created_at": "Created time",
-    "updated_at": "Updated time",
-    "positive_ratings": "Thumbs up",
-    "negative_ratings": "Thumbs down",
-    "reports_count": "Reports",
-}
 
 
 class ExploreView:
@@ -162,7 +155,7 @@ class ArtworkCard(QWidget):
         layout.addWidget(self.previewLabel, 0, Qt.AlignmentFlag.AlignHCenter)
 
         # Title: centered on one line and elided when it exceeds the card width.
-        name = dto.get("name") or "Untitled"
+        name = dto.get("name") or self.tr("UntitledName")
         self.nameLabel = StrongBodyLabel()
         self.nameLabel.setText(
             self.nameLabel.fontMetrics().elidedText(
@@ -190,8 +183,7 @@ class ArtworkCard(QWidget):
         if "status" not in self.dto:
             return
         status = int(self.dto.get("status", 0))
-        text = STATUS_LABELS[status] if 0 <= status < len(STATUS_LABELS) else str(status)
-        self.statusLabel.setText(text)
+        self.statusLabel.setText(status_label(status))
         self.statusLabel.setVisible(True)
 
     def set_preview(self, png: bytes) -> None:
@@ -263,18 +255,18 @@ class ExplorePage(BasePage):
 
     def _build_ui(self) -> None:
         header = QHBoxLayout()
-        header.addWidget(TitleLabel("Explore"))
+        header.addWidget(TitleLabel(self.tr("ExploreTitle")))
         header.addSpacing(12)
         self.viewCombo = ComboBox(self)
-        self.viewCombo.addItem("Random", userData="random")
-        self.viewCombo.addItem("Mine", userData="mine")
+        self.viewCombo.addItem(self.tr("ViewRandom"), userData="random")
+        self.viewCombo.addItem(self.tr("ViewMine"), userData="mine")
         # The Admin entry is appended by _apply_admin_mode when available.
         header.addWidget(self.viewCombo)
         header.addSpacing(8)
         self.pageCombo = ComboBox(self)
         header.addWidget(self.pageCombo)
         header.addStretch()
-        self.refreshBtn = PushButton(FIF.SYNC, "Refresh")
+        self.refreshBtn = PushButton(FIF.SYNC, self.tr("RefreshButton"))
         header.addWidget(self.refreshBtn)
         self.viewLayout.addLayout(header)
 
@@ -283,20 +275,20 @@ class ExplorePage(BasePage):
         filter_row = QHBoxLayout(self.filters)
         filter_row.setContentsMargins(0, 0, 0, 0)
         self.statusChecks: list[CheckBox] = []
-        for label in STATUS_LABELS:
-            check = CheckBox(label, self)
+        for status in range(STATUS_COUNT):
+            check = CheckBox(status_label(status), self)
             check.setChecked(True)
             self.statusChecks.append(check)
             filter_row.addWidget(check)
         filter_row.addSpacing(8)
         self.sortCombo = ComboBox(self)
-        for key, label in _SORT_LABELS.items():
-            self.sortCombo.addItem(label, userData=key)
+        for key in SORT_OPTIONS:
+            self.sortCombo.addItem(sort_label(key), userData=key)
         self.sortCombo.setCurrentIndex(0)
         filter_row.addWidget(self.sortCombo)
         self.orderCombo = ComboBox(self)
-        self.orderCombo.addItem("Descending", userData="desc")
-        self.orderCombo.addItem("Ascending", userData="asc")
+        self.orderCombo.addItem(self.tr("OrderDescending"), userData="desc")
+        self.orderCombo.addItem(self.tr("OrderAscending"), userData="asc")
         filter_row.addWidget(self.orderCombo)
         filter_row.addStretch()
         self.viewLayout.addWidget(self.filters)
@@ -306,7 +298,7 @@ class ExplorePage(BasePage):
         self.progress.setVisible(False)
         self.viewLayout.addWidget(self.progress)
 
-        self.emptyLabel = SubtitleLabel("No artworks on this server yet")
+        self.emptyLabel = SubtitleLabel(self.tr("NoArtworksEmpty"))
         self.viewLayout.addWidget(self.emptyLabel)
 
         self.flow = FlowLayout()
@@ -337,7 +329,7 @@ class ExplorePage(BasePage):
         admin_index = self.viewCombo.findData("admin")
         if plaza.is_admin:
             if admin_index < 0:
-                self.viewCombo.addItem("Admin", userData="admin")
+                self.viewCombo.addItem(self.tr("ViewAdmin"), userData="admin")
         else:
             # Leave the Admin view first; removing the selected entry would
             # make Qt fall back to the Mine entry and switch the view.
@@ -370,7 +362,7 @@ class ExplorePage(BasePage):
         self.pageCombo.clear()
         end = self._page + 1 if has_next else self._page
         for page in range(1, end + 1):
-            self.pageCombo.addItem(f"Page {page}", userData=page)
+            self.pageCombo.addItem(fmt(self.tr("PageFormat"), page), userData=page)
         self.pageCombo.setCurrentIndex(self.pageCombo.findData(self._page))
         self.pageCombo.blockSignals(False)
 
@@ -404,7 +396,7 @@ class ExplorePage(BasePage):
         if self._view.mode == "admin" or self._cooldown is not None:
             return
         self._cooldown = 5
-        self.refreshBtn.setText(f"Refresh ({self._cooldown}s)")
+        self.refreshBtn.setText(fmt(self.tr("RefreshCooldownFormat"), self._cooldown))
         self.viewCombo.setEnabled(False)
         self.pageCombo.setEnabled(False)
         self._cooldownTimer.start(1000)
@@ -421,16 +413,18 @@ class ExplorePage(BasePage):
             self.pageCombo.setEnabled(True)
             if not self._pending:
                 self.refreshBtn.setEnabled(True)
-            self.refreshBtn.setText("Refresh")
+            self.refreshBtn.setText(self.tr("RefreshButton"))
             return
-        self.refreshBtn.setText(f"Refresh ({self._cooldown}s)")
+        self.refreshBtn.setText(fmt(self.tr("RefreshCooldownFormat"), self._cooldown))
 
     def _on_list_result(self, result: HttpResult) -> None:
         self._pending = False
         self.progress.setVisible(False)
         self.refreshBtn.setEnabled(self._view.mode == "admin" or self._cooldown is None)
         if not result.ok:
-            self.emptyLabel.setText(f"Failed to load artworks: {result.detail()}")
+            self.emptyLabel.setText(
+                fmt(self.tr("LoadFailedTip"), localize_http_error(result))
+            )
             self.emptyLabel.setVisible(True)
             self._clear_cards()
             return
@@ -442,7 +436,7 @@ class ExplorePage(BasePage):
             "can_manage": data.get("can_manage", False),
         }
         artworks = data.get("artworks", [])
-        self.emptyLabel.setText("No artworks on this server yet")
+        self.emptyLabel.setText(self.tr("NoArtworksEmpty"))
         self.emptyLabel.setVisible(not artworks)
         self._update_page_combo(len(artworks) == _PAGE_SIZE)
         self._rebuild_cards(artworks)

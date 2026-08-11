@@ -29,6 +29,8 @@ ArkPicit 是一个基于 PySide6 的面向《明日方舟》奇象巡展绘画�
 
 5. **联网功能**：连接服务端后，可在探索页浏览并导入他人作品。
 
+6. **本地化（i18n）**：界面支持英语与简体中文，界面文本以语义化键引用，英语、简体中文译文分别维护在 `resources/i18n/` 下的 en/zh_CN 目录。默认跟随系统语言（简体中文系统自动使用中文）；公告正文、画作名称/描述、设备名与路径等用户内容始终保持原文。
+
 ## 使用方法 <sub>Usage</sub>
 
 本项目使用 **Python 3.12** 进行开发。推荐使用 uv 来安装依赖：
@@ -113,13 +115,15 @@ Ark-Picit/
 │   ├── main.py   # 客户端入口
 │   ├── assets/   # 自动化模板图像
 │   └── src/
-│       ├── app/      # 主窗口、设备管理、网络层、API 客户端、信号总线
+│       ├── app/      # 主窗口、设备管理、网络层、API 客户端、信号总线、本地化
 │       ├── auto/     # 自动化：设备抽象、模板/颜色匹配、Automator 门面
 │       ├── core/     # 数据模型、ArkPicCode 编解码、量化、存储、游戏内任务
 │       ├── gui/      # GUI 页面、控件、对话框
-│       └── utils/    # 路径等工具
+│       ├── resources/  # 翻译资源（TS/QM）
+│       └── utils/    # 路径、结构化消息等工具
 ├── server/           # API 服务端
-│   └── src/          # 路由、校验、鉴权、解析、存储
+│   └── src/          # 路由、校验、鉴权、解析、存储、结构化错误
+├── tools/            # 翻译更新与 i18n lint 脚本
 └── data/             # 运行时数据（启动时生成）
     ├── arkpicit_client_v1/
     └── arkpicit_server_v1/
@@ -197,6 +201,13 @@ flowchart TD
 
 9. **公告去重弹窗**：客户端启动完成 handshake 后拉取 `GET /api/meta/announcement`。若整组公告的 SHA-256 哈希与本地配置记录的 `announcementHash` 不同，则立即弹出公告弹窗（关闭按钮 3 秒内不可用）并更新本地哈希；哈希一致则不再弹窗。
 
+10. **本地化纪律**：应用界面文本统一通过 `self.tr()` / `QCoreApplication.translate()` 传递**语义化键**（如 `DeletePaintingTip`，而非完整英文句子）；英语与简体中文目录分别维护在 `client/src/resources/i18n/ark_picit_{en,zh_CN}.ts`（编译为 `.qm`），键即 TS source，两种语言均为译文。动态参数使用 Qt 风格 `%1`/`%2` 占位符（经 `src.app.i18n.fmt` 代入，`%n` 用于复数）。核心任务、异常与服务端错误只传递稳定消息码/错误码，由 GUI 层翻译；举报原因、排序字段、采样方式等协议值与显示标签严格分离，翻译结果绝不进入 API 载荷。用户内容（画作名称/描述、公告、设备名、路径）不翻译。翻译目录的维护与门禁命令：
+
+```bash
+uv run python tools/update_i18n.py   # 扫描源码、更新双语言 TS 并编译 QM
+uv run python tools/lint_i18n.py     # 校验双目录键一致、占位符、孤儿消息与 QM 同步
+```
+
 ### 服务端
 
 服务端依赖 `server` 依赖组（FastAPI / uvicorn / SQLModel），数据存于 SQLite。服务端不再接受任何命令行参数或环境变量，全部配置均来自配置文件。
@@ -263,6 +274,16 @@ python main.py --server
 
 - **速率限制**：按来源 IP 使用内存滑动窗口限流。每个请求按端点「速率限制乘数」消耗积分，同时受每分钟与每小时两个共享预算约束，任一超限即返回 `429`。
 - **载荷限制**：请求体大小不得超过配置的 `max_payload_length`，超限返回 `413`。
+
+#### 结构化错误
+
+错误响应统一包含稳定机器码，便于客户端本地化展示：
+
+```json
+{"detail": "Already rated", "error_code": "already_rated", "error_params": {}}
+```
+
+客户端优先按 `error_code` 翻译；未知码或旧服务端的纯 `detail` 响应直接显示原文。已知错误码：`too_many_requests`、`payload_too_large`、`admin_token_required`、`client_token_required`、`invalid_client_token`、`invalid_sort`、`invalid_order`、`invalid_mode`、`already_rated`、`already_reported`、`already_published`、`artwork_not_found`、`not_uploading_client`、`invalid_content`。
 
 #### API 端点
 

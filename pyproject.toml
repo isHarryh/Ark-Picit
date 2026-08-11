@@ -28,3 +28,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["client/src"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"client/src/resources/i18n" = "src/resources/i18n"

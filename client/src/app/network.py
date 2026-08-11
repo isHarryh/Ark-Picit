@@ -14,12 +14,14 @@ _TIMEOUT_MS = 15000
 class HttpResult:
     """Outcome of a network request."""
 
-    def __init__(self, *, ok: bool, status: int = 0, data=None, error: str = "", reason=None):
+    def __init__(self, *, ok: bool, status: int = 0, data=None, error: str = "",
+                 reason=None, code: str = ""):
         self.ok = ok
         self.status = status
         self.data = data
         self.error = error
         self.reason = reason  # structured cause, e.g. a NetworkDisabledReason
+        self.code = code  # stable error code, e.g. "request_timeout"
 
     def detail(self) -> str:
         """Return a human-readable error message."""
@@ -30,6 +32,16 @@ class HttpResult:
         if self.error:
             return self.error
         return f"HTTP {self.status}"
+
+    def error_code(self) -> str:
+        """Return the stable machine error code, or an empty string."""
+        if self.code:
+            return self.code
+        if isinstance(self.data, dict):
+            code = self.data.get("error_code")
+            if isinstance(code, str):
+                return code
+        return ""
 
 
 class NetworkClient(QObject):
@@ -74,12 +86,6 @@ class NetworkClient(QObject):
 
         def _finished() -> None:
             timer.stop()
-            if reply.error() != QNetworkReply.NetworkError.NoError:
-                timed_out = reply.property("timedOut")
-                message = "Request timed out" if timed_out else reply.errorString()
-                on_done(HttpResult(ok=False, error=message))
-                reply.deleteLater()
-                return
             status = reply.attribute(QNetworkRequest.Attribute.HttpStatusCodeAttribute) or 0
             raw = bytes(reply.readAll())
             data = None
@@ -88,6 +94,14 @@ class NetworkClient(QObject):
                     data = json.loads(raw)
                 except json.JSONDecodeError:
                     data = raw.decode("utf-8", errors="replace")
+            if reply.error() != QNetworkReply.NetworkError.NoError:
+                timed_out = reply.property("timedOut")
+                message = "Request timed out" if timed_out else reply.errorString()
+                code = "request_timeout" if timed_out else ""
+                on_done(HttpResult(ok=False, status=status, data=data,
+                                   error=message, code=code))
+                reply.deleteLater()
+                return
             on_done(HttpResult(ok=200 <= status < 300, status=status, data=data))
             reply.deleteLater()
 

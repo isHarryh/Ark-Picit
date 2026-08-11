@@ -37,7 +37,7 @@ class ConfirmImportDialog(MessageBoxBase):
         super().__init__(parent)
         self.widget.setMinimumWidth(520)
         self.viewLayout.setSpacing(12)
-        self.viewLayout.addWidget(SubtitleLabel("Confirm import"))
+        self.viewLayout.addWidget(SubtitleLabel(self.tr("ConfirmImportTitle")))
         self.viewLayout.addWidget(BodyLabel(message))
 
         preview_label = QLabel()
@@ -45,5 +45,5 @@ class ConfirmImportDialog(MessageBoxBase):
         preview_label.setPixmap(_pic_to_pixmap(pic))
         self.viewLayout.addWidget(preview_label)
 
-        self.yesButton.setText("Continue")
-        self.cancelButton.setText("Cancel")
+        self.yesButton.setText(self.tr("ContinueButton"))
+        self.cancelButton.setText(self.tr("CancelButton"))

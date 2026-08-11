@@ -22,6 +22,11 @@ class AppConfig(QConfig):
         OptionsValidator([Theme.LIGHT, Theme.DARK, Theme.AUTO]),
         EnumSerializer(Theme),
     )
+    language = OptionsConfigItem(
+        "Appearance", "Language", "system",
+        OptionsValidator(["system", "en", "zh-CN"]),
+        restart=True,
+    )
 
     # API (explore server)
     exploreServerUrl = ConfigItem("API", "ExploreServerUrl", "http://127.0.0.1:7999")

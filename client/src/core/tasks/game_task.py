@@ -26,6 +26,7 @@ from src.core.tasks.canvas import (
 )
 from src.core.tasks.paint import CELL_CLICK_DELAY_MS, paint_canvas
 from src.utils.paths import SCREENSHOT_DIR
+from src.utils.user_message import UserMessage
 
 logger = logging.getLogger(__name__)
 
@@ -35,13 +36,13 @@ class GamePaintTask(QObject):
 
     Emits :attr:`statusChanged` during execution, then either
     :attr:`succeeded` with the recognized layout and the path of an annotated
-    verification screenshot, or :attr:`failed` with an error message.
+    verification screenshot, or :attr:`failed` with a localized message.
     """
 
-    statusChanged = Signal(str)  # step description
+    statusChanged = Signal(object)  # UserMessage step description
     succeeded = Signal(object, str, object)  # CanvasLayout, verification image path, diff cells
-    drawingFinished = Signal(str)  # success message
-    failed = Signal(str)  # error message
+    drawingFinished = Signal(object)  # UserMessage success message
+    failed = Signal(object)  # UserMessage error message
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -65,7 +66,7 @@ class GamePaintTask(QObject):
         A restart while running is rejected with a :attr:`failed` signal.
         """
         if self._running:
-            self.failed.emit("Task is already running")
+            self.failed.emit(UserMessage("task.already_running"))
             return
         self._running = True
         threading.Thread(target=self._run, args=(device, rule, pic), daemon=True).start()
@@ -81,10 +82,10 @@ class GamePaintTask(QObject):
         signal is emitted.
         """
         if self._automator is None or self._layout is None or self._pic is None:
-            self.failed.emit("No verified canvas layout; run detection first")
+            self.failed.emit(UserMessage("task.no_verified_layout"))
             return
         if self._running:
-            self.failed.emit("Task is already running")
+            self.failed.emit(UserMessage("task.already_running"))
             return
         self._incremental = incremental
         self._click_delay_ms = click_delay_ms
@@ -108,15 +109,27 @@ class GamePaintTask(QObject):
         error_path = self._save_error_screenshot(automator)
         logger.info("Saved error screenshot: %s", error_path)
         self._running = False
-        self.failed.emit(f"{exc} (error screenshot: {error_path})")
+        if isinstance(exc, GameTaskError):
+            message = UserMessage(
+                exc.code,
+                exc.params,
+                f"{exc} (error screenshot: {error_path})",
+            )
+        else:
+            message = UserMessage(
+                "task.generic",
+                {},
+                f"{exc} (error screenshot: {error_path})",
+            )
+        self.failed.emit(message)
 
     def _run(self, device: Device, rule: ArkPicRule, pic: ArkPic) -> None:
         automator = Automator(device)
         try:
             layout = calibrate_canvas_layout(automator, rule, self.statusChanged.emit)
-            self.statusChanged.emit("Reading canvas content...")
+            self.statusChanged.emit(UserMessage("task.reading_canvas_content"))
             diff_cells = read_diff_cells(automator, layout, rule, pic)
-            self.statusChanged.emit("Generating verification screenshot...")
+            self.statusChanged.emit(UserMessage("task.generating_verification_screenshot"))
             image_path = self._save_verification_image(automator, layout)
         except GameTaskError as exc:
             self._fail(automator, exc)
@@ -124,7 +137,7 @@ class GamePaintTask(QObject):
         except Exception as exc:
             logger.exception("In-game canvas detection failed")
             self._running = False
-            self.failed.emit(str(exc))
+            self.failed.emit(UserMessage("task.generic", {}, str(exc)))
             return
         self._running = False
         self._automator = automator
@@ -159,7 +172,7 @@ class GamePaintTask(QObject):
             logger.exception("In-game drawing failed")
             self._running = False
             self.cancel()
-            self.failed.emit(str(exc))
+            self.failed.emit(UserMessage("task.generic", {}, str(exc)))
             return
         self._running = False
         self.cancel()

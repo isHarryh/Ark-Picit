@@ -15,6 +15,8 @@ from qfluentwidgets import (
 from qfluentwidgets import FluentIcon as FIF
 
 from src.app.device_manager import deviceManager
+from src.app.i18n import fmt, localize_message
+from src.auto import DeviceKind
 from src.core.tasks import gameTask
 from src.gui.components.base_page import BasePage
 from src.gui.dialogs.device_dialog import browse_and_connect
@@ -32,19 +34,19 @@ class HomePage(BasePage):
 
     def _build_ui(self) -> None:
         self.viewLayout.addWidget(TitleLabel("Ark Picit"))
-        self.viewLayout.addWidget(BodyLabel("Arknights Pixel Art Painter"))
+        self.viewLayout.addWidget(BodyLabel(self.tr("AppTagline")))
 
         self.viewLayout.addSpacing(16)
 
         # Quick-start (title matches the SettingCardGroup headings below)
-        quick_start_title = QLabel("Quick Start", self)
+        quick_start_title = QLabel(self.tr("QuickStartTitle"), self)
         setFont(quick_start_title, 20)
         self.viewLayout.addWidget(quick_start_title)
 
         btn_row = QHBoxLayout()
-        self.btnNew = PrimaryPushButton(FIF.EDIT, "Go to Create")
+        self.btnNew = PrimaryPushButton(FIF.EDIT, self.tr("GoToCreateButton"))
         self.btnNew.clicked.connect(self._go_create)
-        self.btnOpenGallery = PushButton(FIF.PHOTO, "Open My Gallery")
+        self.btnOpenGallery = PushButton(FIF.PHOTO, self.tr("OpenGalleryButton"))
         self.btnOpenGallery.clicked.connect(self._open_gallery)
         btn_row.addWidget(self.btnNew)
         btn_row.addWidget(self.btnOpenGallery)
@@ -54,18 +56,23 @@ class HomePage(BasePage):
         self.viewLayout.addSpacing(16)
 
         # Controller and in-game paint task status
-        self.deviceGroup = SettingCardGroup("Controller", self)
+        self.deviceGroup = SettingCardGroup(self.tr("ControllerGroupTitle"), self)
 
         self.browseCard = PushSettingCard(
-            "Connect", FIF.SEARCH, "Controller", "Browse and connect a game window or adb device",
+            self.tr("ConnectButton"), FIF.SEARCH, self.tr("ControllerGroupTitle"),
+            self.tr("BrowseCardTip"),
         )
         self.browseCard.button.setIcon(FIF.CONNECT.icon())
         self.deviceGroup.addSettingCard(self.browseCard)
 
-        self.deviceCard = SettingCard(FIF.EMBED, "Current Controller", "No controller connected")
+        self.deviceCard = SettingCard(
+            FIF.EMBED, self.tr("CurrentControllerCardTitle"), self.tr("NoControllerConnectedTip")
+        )
         self.deviceGroup.addSettingCard(self.deviceCard)
 
-        self.taskCard = SettingCard(FIF.BRUSH, "Task Status", "Not started")
+        self.taskCard = SettingCard(
+            FIF.BRUSH, self.tr("TaskStatusCardTitle"), self.tr("NotStartedStatus")
+        )
         self.deviceGroup.addSettingCard(self.taskCard)
 
         self.viewLayout.addWidget(self.deviceGroup)
@@ -98,23 +105,32 @@ class HomePage(BasePage):
     def _on_device_connected(self, _device) -> None:
         self._refresh_device_card()
 
-    def _on_connect_failed(self, _message: str) -> None:
+    def _on_connect_failed(self, _message) -> None:
         self._refresh_device_card()
+
+    def _device_kind_label(self, kind: DeviceKind) -> str:
+        """Return the localized display name of a device kind."""
+        if kind is DeviceKind.WIN32:
+            return self.tr("WindowsWindowKind")
+        return self.tr("AdbDeviceKind")
 
     def _refresh_device_card(self) -> None:
         candidate = deviceManager.candidate
         if candidate is None:
-            self.deviceCard.setContent("No controller connected")
+            self.deviceCard.setContent(self.tr("NoControllerConnectedTip"))
         else:
-            self.deviceCard.setContent(f"{candidate.kind.value} - {candidate.label}")
+            label = self._device_kind_label(candidate.kind)
+            self.deviceCard.setContent(f"{label} - {candidate.label}")
 
     # ------------------------------------------------------------------
     # Game paint task
     # ------------------------------------------------------------------
 
-    def _on_task_status(self, message: str) -> None:
+    def _on_task_status(self, message) -> None:
         """Update the task card with the current step."""
-        self.taskCard.setContent(f"Running: {message}")
+        self.taskCard.setContent(
+            fmt(self.tr("RunningStatusFormat"), localize_message(message))
+        )
 
     def _on_task_succeeded(self, layout, image_path: str, diff_cells) -> None:
         """Ask the user to confirm the regions, then start drawing on accept.
@@ -123,8 +139,15 @@ class HomePage(BasePage):
         application window is raised here to keep the dialog visible.
         """
         self.taskCard.setContent(
-            f"Success: canvas {layout.rows}x{layout.cols} recognized "
-            f"({layout.canvas.w}x{layout.canvas.h} at {layout.canvas.x},{layout.canvas.y})"
+            fmt(
+                self.tr("CanvasRecognizedStatusFormat"),
+                layout.rows,
+                layout.cols,
+                layout.canvas.w,
+                layout.canvas.h,
+                layout.canvas.x,
+                layout.canvas.y,
+            )
         )
         window = self.window()
         window.showNormal()
@@ -138,14 +161,16 @@ class HomePage(BasePage):
             )
         else:
             gameTask.cancel()
-            self.taskCard.setContent("Cancelled")
+            self.taskCard.setContent(self.tr("CancelledStatus"))
 
-    def _on_drawing_finished(self, message: str) -> None:
+    def _on_drawing_finished(self, message) -> None:
         """Show the drawing completion state."""
-        self.taskCard.setContent(f"Success: {message}")
-        InfoBar.success("Drawing finished", message, parent=self.window(), duration=4000)
+        text = localize_message(message)
+        self.taskCard.setContent(fmt(self.tr("SuccessStatusFormat"), text))
+        InfoBar.success(self.tr("DrawingFinishedTitle"), text, parent=self.window(), duration=4000)
 
-    def _on_task_failed(self, message: str) -> None:
+    def _on_task_failed(self, message) -> None:
         """Show the failure state and an error popup."""
-        self.taskCard.setContent(f"Failed: {message}")
-        InfoBar.error("Task failed", message, parent=self.window(), duration=6000)
+        text = localize_message(message)
+        self.taskCard.setContent(fmt(self.tr("FailedStatusFormat"), text))
+        InfoBar.error(self.tr("TaskFailedTitle"), text, parent=self.window(), duration=6000)

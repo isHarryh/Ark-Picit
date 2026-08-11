@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QDateTime, QLocale, Qt
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtWidgets import QDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 from qfluentwidgets import (
@@ -23,8 +21,9 @@ from qfluentwidgets import (
     FluentIcon as FIF,
 )
 
+from src.app.i18n import fmt, localize_http_error
 from src.app.network import HttpResult
-from src.app.plaza import REASONS, STATUS_LABELS, plaza
+from src.app.plaza import REASONS, STATUS_COUNT, plaza, reason_label, status_label
 from src.app.signal_bus import signalBus
 from src.core import storage
 from src.core.preview import generate_preview
@@ -34,16 +33,11 @@ _PREVIEW_SIZE = 240
 
 
 def _fmt_time(value: str) -> str:
-    """Format an ISO timestamp as ``YYYY-MM-DD HH:MM`` (local time)."""
-    if not value:
-        return "-"
-    try:
-        dt = datetime.fromisoformat(value)
-    except ValueError:
+    """Format an ISO timestamp in the app locale as ``YYYY-MM-DD HH:MM``."""
+    dt = QDateTime.fromString(value, Qt.DateFormat.ISODate)
+    if not dt.isValid():
         return value
-    if dt.tzinfo is not None:
-        dt = dt.astimezone()
-    return dt.strftime("%Y-%m-%d %H:%M")
+    return QLocale().toString(dt.toLocalTime(), "yyyy-MM-dd HH:mm")
 
 
 class ReportReasonDialog(QDialog):
@@ -51,20 +45,21 @@ class ReportReasonDialog(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Report artwork")
+        self.setWindowTitle(self.tr("ReportArtworkTitle"))
         self.setFixedSize(380, 330)
 
         body = QVBoxLayout(self)
         body.setContentsMargins(24, 16, 24, 16)
         body.setSpacing(10)
-        hint = CaptionLabel("Why are you reporting this artwork?", self)
+        hint = CaptionLabel(self.tr("ReportReasonHint"), self)
         body.addWidget(hint)
 
         grid = QGridLayout()
         grid.setSpacing(10)
         self._radios: list[RadioButton] = []
         for index, reason in enumerate(REASONS):
-            radio = RadioButton(reason, self)
+            radio = RadioButton(reason_label(reason), self)
+            radio.setProperty("reasonKey", reason)
             radio.toggled.connect(self._on_toggled)
             self._radios.append(radio)
             grid.addWidget(radio, index // 2, index % 2)
@@ -73,10 +68,10 @@ class ReportReasonDialog(QDialog):
 
         buttons = QHBoxLayout()
         buttons.addStretch()
-        self.reportBtn = PrimaryPushButton("Report")
+        self.reportBtn = PrimaryPushButton(self.tr("ReportButton"))
         self.reportBtn.setEnabled(False)
         self.reportBtn.clicked.connect(self.accept)
-        self.cancelBtn = PushButton("Cancel")
+        self.cancelBtn = PushButton(self.tr("CancelButton"))
         self.cancelBtn.clicked.connect(self.reject)
         buttons.addWidget(self.reportBtn)
         buttons.addWidget(self.cancelBtn)
@@ -86,7 +81,9 @@ class ReportReasonDialog(QDialog):
         self.reportBtn.setEnabled(any(r.isChecked() for r in self._radios))
 
     def selected_reason(self) -> str:
-        return next(radio.text() for radio in self._radios if radio.isChecked())
+        """Return the stable protocol key of the checked reason."""
+        radio = next(r for r in self._radios if r.isChecked())
+        return str(radio.property("reasonKey"))
 
 
 class ExploreDetailDialog(QDialog):
@@ -102,7 +99,7 @@ class ExploreDetailDialog(QDialog):
             "can_manage": False,
         }
         self.removed = False
-        self.setWindowTitle("Artwork")
+        self.setWindowTitle(self.tr("ArtworkTitle"))
         self.setFixedSize(820, 480)
         self._build_ui()
         self._refresh_rating_state()
@@ -142,11 +139,11 @@ class ExploreDetailDialog(QDialog):
         right = QVBoxLayout()
         right.setSpacing(10)
 
-        self.nameLabel = TitleLabel(self.dto.get("name") or "Untitled")
+        self.nameLabel = TitleLabel(self.dto.get("name") or self.tr("UntitledName"))
         right.addWidget(self.nameLabel)
 
         description = (self.dto.get("description") or "").strip()
-        self.descLabel = BodyLabel(description if description else "No description")
+        self.descLabel = BodyLabel(description if description else self.tr("NoDescriptionTip"))
         self.descLabel.setWordWrap(True)
         right.addWidget(self.descLabel)
 
@@ -165,8 +162,8 @@ class ExploreDetailDialog(QDialog):
         save_layout = QHBoxLayout(self.saveRow)
         save_layout.setContentsMargins(0, 0, 0, 0)
         save_layout.setSpacing(8)
-        self.importBtn = PrimaryPushButton(FIF.EDIT, "Import to Canvas")
-        self.copyBtn = PushButton(FIF.DOWNLOAD, "Copy to Gallery")
+        self.importBtn = PrimaryPushButton(FIF.EDIT, self.tr("ImportToCanvasButton"))
+        self.copyBtn = PushButton(FIF.DOWNLOAD, self.tr("CopyToGalleryButton"))
         self.importBtn.clicked.connect(self._on_import)
         self.copyBtn.clicked.connect(self._on_copy)
         save_layout.addWidget(self.importBtn)
@@ -179,9 +176,9 @@ class ExploreDetailDialog(QDialog):
         feedback_layout = QHBoxLayout(self.feedbackRow)
         feedback_layout.setContentsMargins(0, 0, 0, 0)
         feedback_layout.setSpacing(8)
-        self.likeBtn = PushButton(FIF.CARE_UP_SOLID, "Thumbs Up")
-        self.dislikeBtn = PushButton(FIF.CARE_DOWN_SOLID, "Thumbs Down")
-        self.reportBtn = PushButton(FIF.FLAG, "Report")
+        self.likeBtn = PushButton(FIF.CARE_UP_SOLID, self.tr("ThumbsUpButton"))
+        self.dislikeBtn = PushButton(FIF.CARE_DOWN_SOLID, self.tr("ThumbsDownButton"))
+        self.reportBtn = PushButton(FIF.FLAG, self.tr("ReportButton"))
         self.likeBtn.clicked.connect(lambda: self._on_rate(1))
         self.dislikeBtn.clicked.connect(lambda: self._on_rate(0))
         self.reportBtn.clicked.connect(self._on_report)
@@ -195,7 +192,7 @@ class ExploreDetailDialog(QDialog):
         self.removeRow = QWidget()
         remove_layout = QHBoxLayout(self.removeRow)
         remove_layout.setContentsMargins(0, 0, 0, 0)
-        self.removeBtn = PushButton(FIF.DELETE, "Remove from Plaza")
+        self.removeBtn = PushButton(FIF.DELETE, self.tr("RemoveFromPlazaButton"))
         self.removeBtn.clicked.connect(self._on_remove)
         remove_layout.addWidget(self.removeBtn)
         remove_layout.addStretch()
@@ -206,13 +203,13 @@ class ExploreDetailDialog(QDialog):
         admin_row = QHBoxLayout(self.adminPanel)
         admin_row.setContentsMargins(0, 0, 0, 0)
         admin_row.setSpacing(8)
-        admin_row.addWidget(StrongBodyLabel("Status:"))
+        admin_row.addWidget(StrongBodyLabel(self.tr("StatusLabel")))
         self.statusCombo = ComboBox(self)
-        for i, label in enumerate(STATUS_LABELS):
-            self.statusCombo.addItem(label, userData=i)
+        for status in range(STATUS_COUNT):
+            self.statusCombo.addItem(status_label(status), userData=status)
         self.statusCombo.setFixedWidth(150)
         admin_row.addWidget(self.statusCombo)
-        self.setStatusBtn = PushButton(FIF.ACCEPT, "Set Status")
+        self.setStatusBtn = PushButton(FIF.ACCEPT, self.tr("SetStatusButton"))
         self.setStatusBtn.clicked.connect(self._on_audit)
         admin_row.addWidget(self.setStatusBtn)
         admin_row.addStretch()
@@ -222,7 +219,7 @@ class ExploreDetailDialog(QDialog):
         root.addLayout(body, 1)
 
         # Bottom: close button.
-        self.closeBtn = PushButton(FIF.CLOSE, "Close")
+        self.closeBtn = PushButton(FIF.CLOSE, self.tr("CloseButton"))
         self.closeBtn.clicked.connect(self.reject)
         bottom = QHBoxLayout()
         bottom.addStretch()
@@ -254,9 +251,9 @@ class ExploreDetailDialog(QDialog):
             self.likeBtn.setEnabled(False)
             self.dislikeBtn.setEnabled(False)
             if value:
-                self.likeBtn.setText("Rated: Thumbs Up")
+                self.likeBtn.setText(self.tr("RatedThumbsUpLabel"))
             else:
-                self.dislikeBtn.setText("Rated: Thumbs Down")
+                self.dislikeBtn.setText(self.tr("RatedThumbsDownLabel"))
 
     def _refresh_report_state(self) -> None:
         self.reportBtn.setEnabled(not plaza.is_reported(self.content))
@@ -272,16 +269,19 @@ class ExploreDetailDialog(QDialog):
         self.adminPanel.setVisible(can_manage)
 
         self.sizeLabel.setText(
-            f"Size {self.dto.get('width')}x{self.dto.get('height')}"
+            fmt(self.tr("SizeFormat"), self.dto.get("width"), self.dto.get("height"))
         )
         parts = []
         if can_edit or can_manage:
-            parts.append(f"Created {_fmt_time(self.dto.get('created_at', ''))}")
-            parts.append(f"Updated {_fmt_time(self.dto.get('updated_at', ''))}")
+            parts.append(fmt(self.tr("CreatedFormat"), _fmt_time(self.dto.get("created_at", ""))))
+            parts.append(fmt(self.tr("UpdatedFormat"), _fmt_time(self.dto.get("updated_at", ""))))
             parts.append(
-                f"Thumbs up {self.dto.get('up_votes', 0)}  ·  "
-                f"Thumbs down {self.dto.get('down_votes', 0)}  ·  "
-                f"Reports {self.dto.get('reports_count', 0)}"
+                fmt(
+                    self.tr("ThumbsMetaFormat"),
+                    self.dto.get("up_votes", 0),
+                    self.dto.get("down_votes", 0),
+                    self.dto.get("reports_count", 0),
+                )
             )
         self.metaLabel.setText(" · ".join(parts))
         if can_manage:
@@ -301,12 +301,12 @@ class ExploreDetailDialog(QDialog):
         decoded = decode_any_ruleset(self.content)
         if decoded is None:
             InfoBar.error(
-                "Copy failed", "This artwork uses an unknown ruleset.",
+                self.tr("CopyFailedTitle"), self.tr("UnknownRulesetTip"),
                 parent=self, duration=3000,
             )
             return
         stored = storage.StoredPic.from_ark_pic(
-            decoded.name or self.dto.get("name") or "Untitled",
+            decoded.name or self.dto.get("name") or self.tr("UntitledName"),
             decoded.description or "",
             decoded.pic,
             decoded.pic.rule,
@@ -314,7 +314,7 @@ class ExploreDetailDialog(QDialog):
         storage.save(stored)
         signalBus.paintingSaved.emit()
         InfoBar.success(
-            "Copied", "Artwork saved to your gallery.",
+            self.tr("CopiedTitle"), self.tr("CopiedTip"),
             parent=self, duration=2000,
         )
 
@@ -326,17 +326,17 @@ class ExploreDetailDialog(QDialog):
             if result.ok:
                 plaza.mark_rated(self.content, value)
                 if value:
-                    self.likeBtn.setText("Rated: Thumbs Up")
+                    self.likeBtn.setText(self.tr("RatedThumbsUpLabel"))
                 else:
-                    self.dislikeBtn.setText("Rated: Thumbs Down")
+                    self.dislikeBtn.setText(self.tr("RatedThumbsDownLabel"))
                 InfoBar.success(
-                    "Thank you", "Your rating was recorded.",
+                    self.tr("ThankYouTitle"), self.tr("RatingRecordedTip"),
                     parent=self, duration=2000,
                 )
             else:
                 self._refresh_rating_state()
                 InfoBar.error(
-                    "Rating failed", result.detail(),
+                    self.tr("RatingFailedTitle"), localize_http_error(result),
                     parent=self, duration=3000,
                 )
 
@@ -353,13 +353,13 @@ class ExploreDetailDialog(QDialog):
             if result.ok:
                 plaza.mark_reported(self.content)
                 InfoBar.success(
-                    "Reported", "The moderation team has been notified.",
+                    self.tr("ReportedTitle"), self.tr("ReportedTip"),
                     parent=self, duration=2500,
                 )
             else:
                 self._refresh_report_state()
                 InfoBar.error(
-                    "Report failed", result.detail(),
+                    self.tr("ReportFailedTitle"), localize_http_error(result),
                     parent=self, duration=3000,
                 )
 
@@ -368,12 +368,12 @@ class ExploreDetailDialog(QDialog):
     def _on_remove(self) -> None:
         """Delete this artwork from the plaza (uploader only)."""
         box = MessageBox(
-            "Remove artwork?",
-            "Remove this artwork from the plaza permanently?",
+            self.tr("RemoveArtworkTitle"),
+            self.tr("RemoveArtworkTip"),
             self,
         )
-        box.yesButton.setText("Remove")
-        box.cancelButton.setText("Cancel")
+        box.yesButton.setText(self.tr("RemoveButton"))
+        box.cancelButton.setText(self.tr("CancelButton"))
         if not box.exec():
             return
         self.removeBtn.setEnabled(False)
@@ -383,13 +383,13 @@ class ExploreDetailDialog(QDialog):
             if result.ok:
                 self.removed = True
                 InfoBar.success(
-                    "Removed", "The artwork is no longer on the plaza.",
+                    self.tr("RemovedTitle"), self.tr("RemovedTip"),
                     parent=self, duration=2500,
                 )
                 self.accept()
             else:
                 InfoBar.error(
-                    "Remove failed", result.detail(),
+                    self.tr("RemoveFailedTitle"), localize_http_error(result),
                     parent=self, duration=3000,
                 )
 
@@ -405,13 +405,13 @@ class ExploreDetailDialog(QDialog):
                 plaza.record_admin_change(self.content, new_status)
                 self.dto["status"] = new_status
                 InfoBar.success(
-                    "Status updated",
-                    f"Artwork status is now: {STATUS_LABELS[new_status]}",
+                    self.tr("StatusUpdatedTitle"),
+                    fmt(self.tr("StatusNowFormat"), status_label(new_status)),
                     parent=self, duration=2500,
                 )
             else:
                 InfoBar.error(
-                    "Update failed", result.detail(),
+                    self.tr("UpdateFailedTitle"), localize_http_error(result),
                     parent=self, duration=3000,
                 )
 

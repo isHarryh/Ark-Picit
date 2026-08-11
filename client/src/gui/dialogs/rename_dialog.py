@@ -21,38 +21,38 @@ class RenameDialog(MessageBoxBase):
         super().__init__(parent)
         self.widget.setMinimumWidth(420)
         self.viewLayout.setSpacing(12)
-        self.viewLayout.addWidget(SubtitleLabel("Rename painting"))
+        self.viewLayout.addWidget(SubtitleLabel(self.tr("RenamePaintingTitle")))
 
         self.nameEdit = LineEdit(self)
         self.nameEdit.setText(stored.name)
-        self.nameEdit.setPlaceholderText("Painting name")
+        self.nameEdit.setPlaceholderText(self.tr("PaintingNamePlaceholder"))
         self.nameEdit.setMaxLength(_NAME_MAX_LENGTH)
         self.descEdit = LineEdit(self)
         self.descEdit.setText(stored.description)
-        self.descEdit.setPlaceholderText("Optional description")
+        self.descEdit.setPlaceholderText(self.tr("OptionalDescriptionPlaceholder"))
         self.descEdit.setMaxLength(_DESCRIPTION_MAX_LENGTH)
 
         switch_row = QHBoxLayout()
         switch_row.setSpacing(8)
-        switch_row.addWidget(BodyLabel("Update last saved time"))
+        switch_row.addWidget(BodyLabel(self.tr("UpdateTimeLabel")))
         self.timeSwitch = SwitchButton()
         self.timeSwitch.setChecked(True)
         switch_row.addWidget(self.timeSwitch)
         switch_row.addStretch()
 
-        self.viewLayout.addWidget(BodyLabel("Name:"))
+        self.viewLayout.addWidget(BodyLabel(self.tr("NameLabel")))
         self.viewLayout.addWidget(self.nameEdit)
-        self.viewLayout.addWidget(BodyLabel("Description:"))
+        self.viewLayout.addWidget(BodyLabel(self.tr("DescriptionLabel")))
         self.viewLayout.addWidget(self.descEdit)
         self.viewLayout.addLayout(switch_row)
 
-        self.yesButton.setText("Save")
-        self.cancelButton.setText("Cancel")
+        self.yesButton.setText(self.tr("SaveButton"))
+        self.cancelButton.setText(self.tr("CancelButton"))
 
     @property
     def new_name(self) -> str:
         """Return the entered name, falling back to ``"Untitled"`` when blank."""
-        return self.nameEdit.text().strip() or "Untitled"
+        return self.nameEdit.text().strip() or self.tr("UntitledName")
 
     @property
     def new_description(self) -> str:

@@ -1,10 +1,9 @@
 """Gallery page: browse, edit, delete, export saved paintings."""
 
 import zipfile
-from datetime import datetime
 from pathlib import Path
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QDateTime, QLocale, Qt
 from PySide6.QtGui import QAction, QImage, QPixmap
 from PySide6.QtWidgets import QFileDialog, QGridLayout, QHBoxLayout, QVBoxLayout
 from qfluentwidgets import (
@@ -24,6 +23,7 @@ from qfluentwidgets import (
     FluentIcon as FIF,
 )
 
+from src.app.i18n import fmt, localize_http_error
 from src.app.signal_bus import signalBus
 from src.core import storage
 from src.gui.components.base_page import BasePage
@@ -31,14 +31,11 @@ from src.gui.dialogs.rename_dialog import RenameDialog
 
 
 def _format_saved_time(value: str) -> str:
-    """Format an ISO saved-time string in local time as ``YYYY-MM-DD HH:MM:SS``."""
-    try:
-        dt = datetime.fromisoformat(value)
-    except ValueError:
+    """Format an ISO saved-time string in the app locale."""
+    dt = QDateTime.fromString(value, Qt.DateFormat.ISODate)
+    if not dt.isValid():
         return value
-    if dt.tzinfo is not None:
-        dt = dt.astimezone()
-    return dt.strftime("%Y-%m-%d %H:%M:%S")
+    return QLocale().toString(dt.toLocalTime(), "yyyy-MM-dd HH:mm:ss")
 
 
 class PaintingCard(HeaderCardWidget):
@@ -47,7 +44,7 @@ class PaintingCard(HeaderCardWidget):
     def __init__(self, stored: storage.StoredPic, parent=None):
         super().__init__(parent)
         self.stored = stored
-        self.setTitle(stored.name or "Untitled")
+        self.setTitle(stored.name or self.tr("UntitledName"))
         self.setFixedHeight(200)
 
         layout = QHBoxLayout()
@@ -68,11 +65,19 @@ class PaintingCard(HeaderCardWidget):
         meta = QVBoxLayout()
         meta.addStretch()
         if stored.description:
-            meta.addWidget(BodyLabel(f"Description: {stored.description}"))
+            meta.addWidget(
+                BodyLabel(
+                    fmt(self.tr("DescriptionFormat"), stored.description)
+                )
+            )
         meta.addWidget(
             BodyLabel(
-                f"Size {stored.rule_width}x{stored.rule_height}, "
-                f"Palette {len(stored.rule_colors)} colors"
+                fmt(
+                    self.tr("SizePaletteFormat"),
+                    stored.rule_width,
+                    stored.rule_height,
+                    len(stored.rule_colors),
+                )
             )
         )
         meta.addWidget(BodyLabel(_format_saved_time(stored.last_saved)))
@@ -82,11 +87,11 @@ class PaintingCard(HeaderCardWidget):
         # Actions (2x2 grid, vertically centered)
         btns = QGridLayout()
         btns.setSpacing(4)
-        open_btn = PrimaryPushButton(FIF.EDIT, "Open")
-        export_btn = PushButton(FIF.SHARE, "Code")
-        rename_btn = PushButton(FIF.TAG, "Rename")
-        delete_btn = PushButton(FIF.DELETE, "Delete")
-        self.publish_btn = PushButton(FIF.CLOUD, "Publish")
+        open_btn = PrimaryPushButton(FIF.EDIT, self.tr("OpenButton"))
+        export_btn = PushButton(FIF.SHARE, self.tr("CodeButton"))
+        rename_btn = PushButton(FIF.TAG, self.tr("RenameButton"))
+        delete_btn = PushButton(FIF.DELETE, self.tr("DeleteButton"))
+        self.publish_btn = PushButton(FIF.CLOUD, self.tr("PublishButton"))
         open_btn.clicked.connect(lambda: signalBus.editPainting.emit(stored.id))
         export_btn.clicked.connect(lambda: self._show_code(stored))
         rename_btn.clicked.connect(self._rename)
@@ -120,14 +125,12 @@ class PaintingCard(HeaderCardWidget):
         from src.core import encode
 
         box = MessageBox(
-            "Confirm upload?",
-            "Uploading means you grant the community usage rights to this artwork. "
-            "You may credit yourself in the artwork description before uploading. "
-            "Uploaded content may take some time to become publicly visible after review.",
+            self.tr("ConfirmUploadTitle"),
+            self.tr("UploadRightsTip"),
             self.window(),
         )
-        box.yesButton.setText("Upload")
-        box.cancelButton.setText("Cancel")
+        box.yesButton.setText(self.tr("UploadButton"))
+        box.cancelButton.setText(self.tr("CancelButton"))
         if not box.exec():
             return
 
@@ -138,10 +141,13 @@ class PaintingCard(HeaderCardWidget):
         def on_done(result) -> None:
             self.publish_btn.setEnabled(True)
             if not result.ok:
-                InfoBar.error("Publish failed", result.detail(), parent=self.window(), duration=3000)
+                InfoBar.error(
+                    self.tr("PublishFailedTitle"), localize_http_error(result),
+                    parent=self.window(), duration=3000,
+                )
                 return
             InfoBar.success(
-                "Published", "Your artwork is now on the plaza.",
+                self.tr("PublishedTitle"), self.tr("PublishedTip"),
                 parent=self.window(), duration=2500,
             )
 
@@ -155,18 +161,20 @@ class PaintingCard(HeaderCardWidget):
         self.stored.name = dialog.new_name
         self.stored.description = dialog.new_description
         if dialog.update_time:
-            self.stored.last_saved = datetime.now().isoformat(timespec="seconds")
+            self.stored.last_saved = QDateTime.currentDateTime().toLocalTime().toString(
+                Qt.DateFormat.ISODate
+            )
         storage.save(self.stored)
         signalBus.paintingSaved.emit()
 
     def _delete(self) -> None:
         box = MessageBox(
-            "Delete painting?",
-            f"Delete '{self.stored.name}' permanently?",
+            self.tr("DeletePaintingTitle"),
+            fmt(self.tr("DeletePaintingTip"), self.stored.name),
             self.window(),
         )
-        box.yesButton.setText("Delete")
-        box.cancelButton.setText("Cancel")
+        box.yesButton.setText(self.tr("DeleteButton"))
+        box.cancelButton.setText(self.tr("CancelButton"))
         if not box.exec():
             return
         storage.delete(self.stored.id)
@@ -186,21 +194,21 @@ class GalleryPage(BasePage):
 
     def _build_ui(self) -> None:
         header = QHBoxLayout()
-        header.addWidget(TitleLabel("Gallery"))
+        header.addWidget(TitleLabel(self.tr("GalleryTitle")))
 
         self.searchEdit = SearchLineEdit(self)
-        self.searchEdit.setPlaceholderText("Search by name or description")
+        self.searchEdit.setPlaceholderText(self.tr("SearchPlaceholder"))
         header.addStretch()
         header.addWidget(self.searchEdit)
-        self.refreshBtn = PushButton(FIF.SYNC, "Refresh")
+        self.refreshBtn = PushButton(FIF.SYNC, self.tr("RefreshButton"))
         header.addWidget(self.refreshBtn)
-        self.backupBtn = SplitPushButton(FIF.ZIP_FOLDER, "Backup", self)
+        self.backupBtn = SplitPushButton(FIF.ZIP_FOLDER, self.tr("BackupButton"), self)
         self._setup_backup_menu()
         self.backupBtn.clicked.connect(self._on_export_backup)
         header.addWidget(self.backupBtn)
         self.viewLayout.addLayout(header)
 
-        self.emptyListLabel = SubtitleLabel("No paintings yet. Create one!")
+        self.emptyListLabel = SubtitleLabel(self.tr("NoPaintingsEmpty"))
         self.viewLayout.addWidget(self.emptyListLabel)
 
         self.cardsLayout = QVBoxLayout()
@@ -215,8 +223,8 @@ class GalleryPage(BasePage):
 
     def _setup_backup_menu(self) -> None:
         """Attach the Export/Import Backup actions to the drop-down menu."""
-        export = QAction(FIF.SAVE_COPY.icon(), "Export Backup", self)
-        import_backup = QAction(FIF.DOWNLOAD.icon(), "Import Backup", self)
+        export = QAction(FIF.SAVE_COPY.icon(), self.tr("ExportBackupAction"), self)
+        import_backup = QAction(FIF.DOWNLOAD.icon(), self.tr("ImportBackupAction"), self)
         export.triggered.connect(self._on_export_backup)
         import_backup.triggered.connect(self._on_import_backup)
         menu = RoundMenu(parent=self)
@@ -228,57 +236,59 @@ class GalleryPage(BasePage):
         """Package all gallery paintings into a user-chosen zip archive."""
         if not storage.list_all():
             InfoBar.warning(
-                "Empty gallery", "Nothing to back up.",
+                self.tr("EmptyGalleryTitle"), self.tr("NothingToBackupTip"),
                 parent=self.window(), duration=3000,
             )
             return
         path, _ = QFileDialog.getSaveFileName(
-            self.window(), "Export Backup", "gallery-backup.zip",
-            "ZIP archives (*.zip)",
+            self.window(), self.tr("ExportBackupAction"), "gallery-backup.zip",
+            self.tr("ZipFilter"),
         )
         if not path:
             return
         try:
             count = storage.backup_to_zip(Path(path))
         except OSError as exc:
-            InfoBar.error("Export failed", str(exc), parent=self.window(), duration=3000)
+            InfoBar.error(self.tr("ExportFailedTitle"), str(exc), parent=self.window(), duration=3000)
             return
         InfoBar.success(
-            "Backup exported", f"{count} paintings saved.",
+            self.tr("BackupExportedTitle"),
+            self.tr("PaintingsSavedNum", None, count),
             parent=self.window(), duration=2500,
         )
 
     def _on_import_backup(self) -> None:
         """Restore gallery paintings from a user-chosen zip archive."""
         path, _ = QFileDialog.getOpenFileName(
-            self.window(), "Import Backup", "",
-            "ZIP archives (*.zip);;All files (*)",
+            self.window(), self.tr("ImportBackupAction"), "",
+            self.tr("ZipAllFilter"),
         )
         if not path:
             return
         box = MessageBox(
-            "Import backup?",
-            "All gallery files with matching names will be replaced by this backup.",
+            self.tr("ImportBackupTitle"),
+            self.tr("ImportBackupTip"),
             self.window(),
         )
-        box.yesButton.setText("Import")
-        box.cancelButton.setText("Cancel")
+        box.yesButton.setText(self.tr("ImportButton"))
+        box.cancelButton.setText(self.tr("CancelButton"))
         if not box.exec():
             return
         try:
             count = storage.restore_from_zip(Path(path))
         except (OSError, zipfile.BadZipFile) as exc:
-            InfoBar.error("Import failed", str(exc), parent=self.window(), duration=3000)
+            InfoBar.error(self.tr("ImportFailedTitle"), str(exc), parent=self.window(), duration=3000)
             return
         self.refresh()
         if count == 0:
             InfoBar.warning(
-                "No paintings found", "The backup contains no gallery files.",
+                self.tr("NoPaintingsTitle"), self.tr("NoGalleryFilesTip"),
                 parent=self.window(), duration=3000,
             )
             return
         InfoBar.success(
-            "Backup imported", f"{count} paintings restored.",
+            self.tr("BackupImportedTitle"),
+            self.tr("PaintingsRestoredNum", None, count),
             parent=self.window(), duration=2500,
         )
 
@@ -315,10 +325,10 @@ class GalleryPage(BasePage):
             if matches:
                 visible += 1
         if self.cardsLayout.count() == 0:
-            self.emptyListLabel.setText("No paintings yet. Create one!")
+            self.emptyListLabel.setText(self.tr("NoPaintingsEmpty"))
             self.emptyListLabel.setVisible(True)
         elif visible == 0:
-            self.emptyListLabel.setText("No paintings match your search")
+            self.emptyListLabel.setText(self.tr("NoSearchMatchesEmpty"))
             self.emptyListLabel.setVisible(True)
         else:
             self.emptyListLabel.setVisible(False)

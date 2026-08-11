@@ -28,7 +28,25 @@ _TERMINATOR = b"\x00"
 
 
 class CodeError(ValueError):
-    """Raised when an ArkPicCode is malformed or incompatible."""
+    """Raised when an ArkPicCode is malformed, corrupted or out of limits.
+
+    The message carries the raw diagnostic text (Base64/compression errors,
+    truncated data, size violations...); it is not localized. The GUI shows
+    a generic "cannot parse" text and passes the message through.
+    """
+
+
+class CodeMismatchError(CodeError):
+    """Raised when a structurally valid code does not match the current ruleset.
+
+    ``code`` and ``params`` describe the mismatch for localized display; the
+    message string is the raw diagnostic text.
+    """
+
+    def __init__(self, message: str, *, code: str, params=None):
+        super().__init__(message)
+        self.code = code
+        self.params = dict(params or {})
 
 
 class DecodedPic:
@@ -95,15 +113,27 @@ def decode(code: str, rule: ArkPicRule) -> DecodedPic:
     width, height, stored_hash = struct.unpack(_HEADER_FMT, raw[:_HEADER_SIZE])
 
     if width != rule.width or height != rule.height:
-        raise CodeError(
+        raise CodeMismatchError(
             f"Dimension mismatch: code is {width}x{height}, rule is "
-            f"{rule.width}x{rule.height}"
+            f"{rule.width}x{rule.height}",
+            code="code.dimension_mismatch",
+            params={
+                "code_width": width,
+                "code_height": height,
+                "rule_width": rule.width,
+                "rule_height": rule.height,
+            },
         )
 
     if stored_hash != rule.color_hash:
-        raise CodeError(
+        raise CodeMismatchError(
             f"Rule hash mismatch: code has 0x{stored_hash:04X}, "
-            f"rule has 0x{rule.color_hash:04X}"
+            f"rule has 0x{rule.color_hash:04X}",
+            code="code.rule_hash_mismatch",
+            params={
+                "code_hash": f"0x{stored_hash:04X}",
+                "rule_hash": f"0x{rule.color_hash:04X}",
+            },
         )
 
     # Parse varstrings

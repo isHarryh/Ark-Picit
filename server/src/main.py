@@ -11,6 +11,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from starlette.middleware.gzip import GZipMiddleware
 
+from .errors import register_error_handler
 from .routers.api import announcement, explore, meta
 
 app = FastAPI(title="Ark Picit Plaza", version="2")
@@ -18,6 +19,7 @@ app.add_middleware(GZipMiddleware, minimum_size=1024, compresslevel=1)
 app.include_router(meta.router)
 app.include_router(announcement.router)
 app.include_router(explore.router)
+register_error_handler(app)
 
 
 def run_server() -> None:

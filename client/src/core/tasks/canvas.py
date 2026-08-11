@@ -15,6 +15,7 @@ from src.auto.base import MatchResult, Point, Region
 from src.core.pic import ArkPic
 from src.core.quantize import quantize_image
 from src.core.rule import ArkPicRule
+from src.utils.user_message import UserMessage
 
 ROI_IN_CANVAS_1 = Region(10, 60, 180, 150)
 ROI_IN_CANVAS_2 = Region(860, 160, 200, 150)
@@ -59,7 +60,16 @@ class GameTemplates:
 
 
 class GameTaskError(Exception):
-    """Raised when the in-game canvas flow cannot continue."""
+    """Raised when the in-game canvas flow cannot continue.
+
+    ``code`` and ``params`` describe the failure for localized display;
+    the message string is the raw diagnostic text.
+    """
+
+    def __init__(self, message: str, *, code: str = "task.generic", params=None):
+        super().__init__(message)
+        self.code = code
+        self.params = dict(params or {})
 
 
 @dataclass(frozen=True, slots=True)
@@ -94,14 +104,14 @@ class CanvasLayout:
         return Region(x0, y0, x1 - x0, y1 - y0)
 
 
-def _noop(_message: str) -> None:
+def _noop(_message: UserMessage) -> None:
     return
 
 
 def calibrate_canvas_layout(
     automator: Automator,
     rule: ArkPicRule,
-    report: Callable[[str], None] | None = None,
+    report: Callable[[UserMessage], None] | None = None,
 ) -> CanvasLayout:
     """Detect the canvas page, zoom out via the scale slider and recognize regions.
 
@@ -111,7 +121,7 @@ def calibrate_canvas_layout(
     """
     notify = report or _noop
     templates = GameTemplates.for_automator(automator)
-    notify("Checking canvas page...")
+    notify(UserMessage("task.checking_canvas_page"))
     in_canvas_1 = automator.find_template(
         templates.in_canvas_1, ROI_IN_CANVAS_1, threshold=MATCH_THRESHOLD
     )
@@ -119,12 +129,15 @@ def calibrate_canvas_layout(
         templates.in_canvas_2, ROI_IN_CANVAS_2, threshold=MATCH_THRESHOLD
     )
     if in_canvas_1 is None or in_canvas_2 is None:
-        raise GameTaskError("Not in the canvas page (In Canvas icons not found)")
+        raise GameTaskError(
+            "Not in the canvas page (In Canvas icons not found)",
+            code="task.not_in_canvas_page",
+        )
 
-    notify("Adjusting canvas zoom...")
+    notify(UserMessage("task.adjusting_canvas_zoom"))
     slider = automator.find_template(templates.slider, ROI_SLIDER, threshold=MATCH_THRESHOLD)
     if slider is None:
-        raise GameTaskError("Canvas scale slider not found")
+        raise GameTaskError("Canvas scale slider not found", code="task.canvas_slider_not_found")
     screen_width, screen_height = automator.screen_size
     # Drag the slider from its match center straight down to the bottom edge;
     # all drags are exact point-to-point operations, never randomized.
@@ -135,11 +148,11 @@ def calibrate_canvas_layout(
         quiet_ms=SETTLE_QUIET_MS, timeout_ms=SETTLE_TIMEOUT_MS, interval_ms=100
     )
 
-    notify("Locating canvas and palette...")
+    notify(UserMessage("task.locating_canvas_and_palette"))
     anchor_lt = automator.find_template(templates.anchor_lt, ROI_ANCHOR_LT, threshold=MATCH_THRESHOLD)
     anchor_rb = automator.find_template(templates.anchor_rb, ROI_ANCHOR_RB, threshold=MATCH_THRESHOLD)
     if anchor_lt is None or anchor_rb is None:
-        raise GameTaskError("Canvas anchors not found")
+        raise GameTaskError("Canvas anchors not found", code="task.canvas_anchors_not_found")
     return _build_layout(
         in_canvas_1,
         in_canvas_2,
@@ -178,7 +191,7 @@ def read_diff_cells(
 def read_game_canvas(
     automator: Automator,
     rule: ArkPicRule,
-    report: Callable[[str], None] | None = None,
+    report: Callable[[UserMessage], None] | None = None,
 ) -> ArkPic:
     """Calibrate the canvas page and read its content as an ArkPic.
 
@@ -204,7 +217,7 @@ def _build_layout(
     canvas_width = canvas_br.x - canvas_tl.x
     canvas_height = canvas_br.y - canvas_tl.y
     if canvas_width <= 0 or canvas_height <= 0:
-        raise GameTaskError("Invalid canvas anchor positions")
+        raise GameTaskError("Invalid canvas anchor positions", code="task.invalid_anchor_positions")
     canvas = Region(canvas_tl.x, canvas_tl.y, canvas_width, canvas_height)
 
     # The palette starts at the second In Canvas icon's bottom-left corner,
@@ -218,7 +231,7 @@ def _build_layout(
     palette_width = round(PALETTE_CELL_SPAN * cell_width)
     palette_height = canvas_br.y - palette_y
     if palette_width <= 0 or palette_height <= 0:
-        raise GameTaskError("Invalid palette region")
+        raise GameTaskError("Invalid palette region", code="task.invalid_palette_region")
     palette = Region(palette_x, palette_y, palette_width, palette_height)
 
     return CanvasLayout(

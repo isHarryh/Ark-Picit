@@ -5,13 +5,14 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from fastapi import APIRouter, Depends, Header, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session
 
 from ... import config, db
 from ...codec import CodeError, parse_code
+from ...errors import ApiError
 from ...models import (
     ALL_STATUSES,
     STATUS_DELETED_BY_USER,
@@ -100,9 +101,9 @@ def explore_list(
             "negative_ratings",
             "reports_count",
         ):
-            raise HTTPException(status_code=400, detail="Invalid sort_by")
+            raise ApiError(400, "invalid_sort", "Invalid sort_by")
         if order not in ("asc", "desc"):
-            raise HTTPException(status_code=400, detail="Invalid order")
+            raise ApiError(400, "invalid_order", "Invalid order")
         page_number = max(1, page_number)
         artworks = db.list_artworks(
             session,
@@ -115,7 +116,7 @@ def explore_list(
         permissions["can_manage"] = True
         return {"artworks": artworks, "total": len(artworks), **permissions}
 
-    raise HTTPException(status_code=400, detail="Invalid mode")
+    raise ApiError(400, "invalid_mode", "Invalid mode")
 
 
 @router.post("/api/explore/rating")
@@ -129,7 +130,7 @@ def rate(request: Request, payload: RatingPayload, session: SessionDep) -> dict:
         session.commit()
     except IntegrityError:
         session.rollback()
-        raise HTTPException(status_code=409, detail="Already rated")
+        raise ApiError(409, "already_rated", "Already rated")
     return {"ok": True}
 
 
@@ -144,7 +145,7 @@ def report(request: Request, payload: ReportPayload, session: SessionDep) -> dic
         session.commit()
     except IntegrityError:
         session.rollback()
-        raise HTTPException(status_code=409, detail="Already reported")
+        raise ApiError(409, "already_reported", "Already reported")
     return {"ok": True}
 
 
@@ -171,7 +172,7 @@ def publish(request: Request, payload: ContentPayload, session: SessionDep,
             max_length=config.get_config().max_payload_length,
         )
     except CodeError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise ApiError(400, "invalid_content", str(e))
     artwork = Artwork(
         ip=_client_ip(request),
         content=payload.content,
@@ -187,7 +188,7 @@ def publish(request: Request, payload: ContentPayload, session: SessionDep,
         session.commit()
     except IntegrityError:
         session.rollback()
-        raise HTTPException(status_code=409, detail="Already published")
+        raise ApiError(409, "already_published", "Already published")
     return {"ok": True}
 
 
@@ -199,9 +200,9 @@ def unpublish(request: Request, payload: ContentPayload, session: SessionDep,
     client = require_client(session, x_client_token)
     artwork = _require_artwork(session, payload.content)
     if artwork.status == STATUS_DELETED_BY_USER:
-        raise HTTPException(status_code=404, detail="Artwork not found")
+        raise ApiError(404, "artwork_not_found", "Artwork not found")
     if artwork.token_id != client.id:
-        raise HTTPException(status_code=403, detail="Not the uploading client")
+        raise ApiError(403, "not_uploading_client", "Not the uploading client")
     artwork.status = STATUS_DELETED_BY_USER
     artwork.updated_at = datetime.now()
     session.add(artwork)
@@ -212,12 +213,12 @@ def unpublish(request: Request, payload: ContentPayload, session: SessionDep,
 def _require_artwork(session: Session, content: str) -> Artwork:
     artwork = db.get_artwork_by_content(session, content)
     if artwork is None:
-        raise HTTPException(status_code=404, detail="Artwork not found")
+        raise ApiError(404, "artwork_not_found", "Artwork not found")
     return artwork
 
 
 def _require_visible(session: Session, content: str) -> Artwork:
     artwork = _require_artwork(session, content)
     if artwork.status != STATUS_NORMAL:
-        raise HTTPException(status_code=404, detail="Artwork not found")
+        raise ApiError(404, "artwork_not_found", "Artwork not found")
     return artwork

@@ -1,6 +1,6 @@
 """Core module: ArkPic painting model and helpers."""
 
-from src.core.code import CodeError, DecodedPic, decode, encode
+from src.core.code import CodeError, CodeMismatchError, DecodedPic, decode, encode
 from src.core.color import (
     hex_to_bgr,
     hex_to_rgb,
@@ -15,6 +15,7 @@ __all__ = [
     "ArkPic",
     "ArkPicRule",
     "CodeError",
+    "CodeMismatchError",
     "DecodedPic",
     "MAX_COLORS",
     "MAX_SIZE",

@@ -60,11 +60,11 @@ class MainWindow(FluentWindow):
         self.settingsPage = SettingsPage(self)
 
     def _init_navigation(self) -> None:
-        self.addSubInterface(self.homePage, FIF.HOME, self.tr("Home"))
-        self.addSubInterface(self.createPage, FIF.EDIT, self.tr("Create"))
-        self.addSubInterface(self.galleryPage, FIF.PHOTO, self.tr("Gallery"))
-        self.addSubInterface(self.explorePage, FIF.GLOBE, self.tr("Explore"))
-        self.addSubInterface(self.settingsPage, FIF.SETTING, self.tr("Settings"),
+        self.addSubInterface(self.homePage, FIF.HOME, self.tr("HomeNav"))
+        self.addSubInterface(self.createPage, FIF.EDIT, self.tr("CreateNav"))
+        self.addSubInterface(self.galleryPage, FIF.PHOTO, self.tr("GalleryNav"))
+        self.addSubInterface(self.explorePage, FIF.GLOBE, self.tr("ExploreNav"))
+        self.addSubInterface(self.settingsPage, FIF.SETTING, self.tr("SettingsNav"),
                              position=NavigationItemPosition.BOTTOM)
 
     def _connect_signals(self) -> None:

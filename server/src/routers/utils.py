@@ -7,10 +7,11 @@ import time
 from collections.abc import Callable
 from typing import Annotated
 
-from fastapi import Depends, Header, HTTPException, Request
+from fastapi import Depends, Header, Request
 from sqlmodel import Session
 
 from .. import config, db
+from ..errors import ApiError
 from ..models import Client
 
 _RATE_IDLE_TIMEOUT = 7200.0  # drop IP budgets idle for 2 hours
@@ -110,9 +111,12 @@ def limited(cost: int) -> Callable:
             if is_admin(request.headers.get("x-admin-token", "")):
                 clear_rate_limit(ip)
             if not _rate_limiter.allow(ip, cost):
-                raise HTTPException(status_code=429, detail="Too many requests")
+                raise ApiError(429, "too_many_requests", "Too many requests")
             if len(await request.body()) > config.get_config().max_payload_length:
-                raise HTTPException(status_code=413, detail="Request payload exceeds the configured limit")
+                raise ApiError(
+                    413, "payload_too_large",
+                    "Request payload exceeds the configured limit",
+                )
             return func(request, *args, **kwargs)
 
         return wrapper
@@ -134,7 +138,7 @@ def require_admin(
     x_admin_token: Annotated[str | None, Header()] = None,
 ) -> None:
     if not is_admin(x_admin_token or ""):
-        raise HTTPException(status_code=403, detail="Administrator token required")
+        raise ApiError(403, "admin_token_required", "Administrator token required")
 
 
 def get_session():
@@ -150,10 +154,10 @@ def require_client(
 ) -> Client:
     """Return the client registered with *x_client_token* or raise 401."""
     if not x_client_token:
-        raise HTTPException(status_code=401, detail="Client token required")
+        raise ApiError(401, "client_token_required", "Client token required")
     client = db.get_client_by_token(session, x_client_token)
     if client is None:
-        raise HTTPException(status_code=401, detail="Invalid client token")
+        raise ApiError(401, "invalid_client_token", "Invalid client token")
     return client
 
 

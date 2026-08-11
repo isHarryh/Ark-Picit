@@ -26,6 +26,7 @@ from qfluentwidgets import (
 )
 
 from src.app.config import cfg
+from src.app.i18n import fmt, localize_http_error
 from src.app.network import HttpResult
 from src.app.plaza import NetworkDisabledReason, plaza
 from src.gui.components.base_page import BasePage
@@ -38,8 +39,8 @@ class _AnnouncementCard(SettingCard):
     """Opens the announcement viewer or admin manager."""
 
     def __init__(self, parent=None):
-        super().__init__(FIF.MEGAPHONE, "Announcements", None, parent)
-        self.viewBtn = PushButton(FIF.INFO, "View")
+        super().__init__(FIF.MEGAPHONE, self.tr("AnnouncementsTitle"), None, parent)
+        self.viewBtn = PushButton(FIF.INFO, self.tr("ViewButton"))
         self.hBoxLayout.addWidget(self.viewBtn, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(16)
         self.viewBtn.clicked.connect(self._show)
@@ -47,7 +48,7 @@ class _AnnouncementCard(SettingCard):
         self._sync()
 
     def _sync(self) -> None:
-        self.viewBtn.setText("Manage" if plaza.is_admin else "View")
+        self.viewBtn.setText(self.tr("ManageButton") if plaza.is_admin else self.tr("ViewButton"))
 
     def _show(self) -> None:
         dialog = (
@@ -62,9 +63,9 @@ class _AboutCard(SettingCard):
     """Opens the project repository and new-issue page."""
 
     def __init__(self, parent=None):
-        super().__init__(FIF.INFO, "About", None, parent)
+        super().__init__(FIF.INFO, self.tr("AboutTitle"), None, parent)
         githubBtn = PushButton("GitHub")
-        issueBtn = PushButton("Submit Issue")
+        issueBtn = PushButton(self.tr("SubmitIssueButton"))
         githubBtn.clicked.connect(
             lambda _checked=False: QDesktopServices.openUrl(QUrl(_REPOSITORY_URL))
         )
@@ -81,7 +82,7 @@ class _NetworkCard(SettingCard):
     """Toggles network communication; locked when the API version mismatches."""
 
     def __init__(self, parent=None):
-        super().__init__(FIF.GLOBE, "Disable network", None, parent)
+        super().__init__(FIF.GLOBE, self.tr("DisableNetworkTitle"), None, parent)
         self.switchBtn = SwitchButton(self)
         self.hBoxLayout.addWidget(self.switchBtn, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(16)
@@ -109,13 +110,13 @@ class AnnouncementDialog(QDialog):
     def __init__(self, announcements: list, parent=None, hold_seconds: int = 0):
         super().__init__(parent)
         self._hold_remaining = max(0, hold_seconds)
-        self.setWindowTitle("Announcements")
+        self.setWindowTitle(self.tr("AnnouncementsTitle"))
         self.resize(480, 360)
 
         root = QVBoxLayout(self)
         root.setContentsMargins(24, 16, 24, 16)
         root.setSpacing(12)
-        root.addWidget(SubtitleLabel("Announcements"))
+        root.addWidget(SubtitleLabel(self.tr("AnnouncementsTitle")))
 
         if announcements:
             scroll = QScrollArea(self)
@@ -135,10 +136,10 @@ class AnnouncementDialog(QDialog):
             scroll.setWidget(content)
             root.addWidget(scroll, 1)
         else:
-            root.addWidget(CaptionLabel("No announcements at this time."))
+            root.addWidget(CaptionLabel(self.tr("NoAnnouncementsTip")))
             root.addStretch()
 
-        closeBtn = PushButton(FIF.CLOSE, "Close")
+        closeBtn = PushButton(FIF.CLOSE, self.tr("CloseButton"))
         closeBtn.clicked.connect(self.accept)
         if self._hold_remaining:
             self._closeBtn = closeBtn
@@ -161,10 +162,12 @@ class AnnouncementDialog(QDialog):
     def _update_close_btn(self) -> None:
         if self._hold_remaining > 0:
             self._closeBtn.setEnabled(False)
-            self._closeBtn.setText(f"Close ({self._hold_remaining}s)")
+            self._closeBtn.setText(
+                fmt(self.tr("CloseCountdownButton"), self._hold_remaining)
+            )
         else:
             self._closeBtn.setEnabled(True)
-            self._closeBtn.setText("Close")
+            self._closeBtn.setText(self.tr("CloseButton"))
 
     def reject(self) -> None:
         if self._hold_remaining > 0:
@@ -178,13 +181,13 @@ class AnnouncementManagerDialog(QDialog):
     def __init__(self, announcements: list, parent=None):
         super().__init__(parent)
         self._rows: list[tuple[QWidget, LineEdit]] = []
-        self.setWindowTitle("Manage Announcements")
+        self.setWindowTitle(self.tr("ManageAnnouncementsTitle"))
         self.resize(560, 420)
 
         root = QVBoxLayout(self)
         root.setContentsMargins(24, 16, 24, 16)
         root.setSpacing(12)
-        root.addWidget(SubtitleLabel("Manage Announcements"))
+        root.addWidget(SubtitleLabel(self.tr("ManageAnnouncementsTitle")))
 
         scroll = QScrollArea(self)
         scroll.setWidgetResizable(True)
@@ -202,12 +205,12 @@ class AnnouncementManagerDialog(QDialog):
                 else str(item)
             )
 
-        addBtn = PushButton(FIF.ADD, "Add announcement")
+        addBtn = PushButton(FIF.ADD, self.tr("AddAnnouncementButton"))
         addBtn.clicked.connect(lambda _checked=False: self._add_entry())
         root.addWidget(addBtn, 0, Qt.AlignmentFlag.AlignLeft)
 
-        self.saveBtn = PushButton(FIF.SAVE, "Save")
-        cancelBtn = PushButton(FIF.CLOSE, "Cancel")
+        self.saveBtn = PushButton(FIF.SAVE, self.tr("SaveButton"))
+        cancelBtn = PushButton(FIF.CLOSE, self.tr("CancelButton"))
         self.saveBtn.clicked.connect(self._save)
         cancelBtn.clicked.connect(self.reject)
         buttons = QHBoxLayout()
@@ -224,7 +227,7 @@ class AnnouncementManagerDialog(QDialog):
 
         edit = LineEdit(row)
         edit.setText(text)
-        edit.setPlaceholderText("Announcement text")
+        edit.setPlaceholderText(self.tr("AnnouncementTextPlaceholder"))
         removeBtn = ToolButton(FIF.DELETE, row)
         removeBtn.clicked.connect(lambda: self._remove_entry(row))
 
@@ -243,8 +246,8 @@ class AnnouncementManagerDialog(QDialog):
         announcements = [edit.text().strip() for _, edit in self._rows]
         if any(not text for text in announcements):
             InfoBar.warning(
-                "Announcements",
-                "Announcement text cannot be empty.",
+                self.tr("AnnouncementsTitle"),
+                self.tr("EmptyAnnouncementTip"),
                 parent=self,
             )
             return
@@ -254,11 +257,11 @@ class AnnouncementManagerDialog(QDialog):
         def on_done(result: HttpResult) -> None:
             self.saveBtn.setEnabled(True)
             if not result.ok:
-                InfoBar.error("Save failed", result.detail(), parent=self)
+                InfoBar.error(self.tr("SaveFailedTitle"), localize_http_error(result), parent=self)
                 return
             InfoBar.success(
-                "Announcements updated",
-                "The announcement list was published.",
+                self.tr("AnnouncementsUpdatedTitle"),
+                self.tr("AnnouncementsPublishedTip"),
                 parent=self.parentWidget(),
             )
             self.accept()
@@ -270,7 +273,7 @@ class _ServerUrlCard(SettingCard):
     """Edits the API server base URL."""
 
     def __init__(self, parent=None):
-        super().__init__(FIF.LINK, "API base URL", None, parent)
+        super().__init__(FIF.LINK, self.tr("ServerUrlTitle"), None, parent)
         self.urlEdit = LineEdit(self)
         self.urlEdit.setText(str(qconfig.get(cfg().exploreServerUrl)))
         self.urlEdit.setClearButtonEnabled(True)
@@ -287,9 +290,9 @@ class _TokenCard(SettingCard):
     """Verifies the mystery code; unlocks the Admin explore view on success."""
 
     def __init__(self, parent=None):
-        super().__init__(FIF.CERTIFICATE, "Mystery code", None, parent)
+        super().__init__(FIF.CERTIFICATE, self.tr("MysteryCodeTitle"), None, parent)
         self.tokenEdit = PasswordLineEdit(self)
-        self.tokenEdit.setPlaceholderText("Enter the code")
+        self.tokenEdit.setPlaceholderText(self.tr("EnterCodePlaceholder"))
         self.tokenEdit.setFixedWidth(200)
         self.verifyBtn = ToolButton(FIF.ACCEPT, self)
         self.hBoxLayout.addWidget(self.tokenEdit, 0, Qt.AlignmentFlag.AlignRight)
@@ -301,20 +304,32 @@ class _TokenCard(SettingCard):
     def _verify(self) -> None:
         token = self.tokenEdit.text().strip()
         if not token:
-            InfoBar.warning("Mystery Code", "Please enter a code first.", parent=self.window())
+            InfoBar.warning(
+                self.tr("MysteryCodeTitle"), self.tr("EnterCodeFirstTip"),
+                parent=self.window(),
+            )
             return
         self.verifyBtn.setEnabled(False)
 
         def on_done(result: HttpResult) -> None:
             self.verifyBtn.setEnabled(True)
             if not result.ok:
-                InfoBar.error("Verification failed", result.detail(), parent=self.window())
+                InfoBar.error(
+                    self.tr("VerificationFailedTitle"), localize_http_error(result),
+                    parent=self.window(),
+                )
                 return
             if plaza.is_admin:
                 qconfig.set(cfg().exploreToken, token)
-                InfoBar.success("Verified", "The code was accepted.", parent=self.window())
+                InfoBar.success(
+                    self.tr("VerifiedTitle"), self.tr("CodeAcceptedTip"),
+                    parent=self.window(),
+                )
             else:
-                InfoBar.warning("Verification failed", "That code was not accepted.", parent=self.window())
+                InfoBar.warning(
+                    self.tr("VerificationFailedTitle"), self.tr("CodeRejectedTip"),
+                    parent=self.window(),
+                )
 
         plaza.verify_token(token, on_done)
 
@@ -336,17 +351,26 @@ class SettingsPage(BasePage):
         self.viewLayout.addWidget(self.aboutCard)
 
         # --- Appearance ---
-        self.appearanceGroup = SettingCardGroup("Appearance", self)
+        self.appearanceGroup = SettingCardGroup(self.tr("AppearanceGroupTitle"), self)
 
         self.themeCard = OptionsSettingCard(
             cfg().themeMode,
             FIF.BRUSH,
-            "Theme",
+            self.tr("ThemeCardTitle"),
             None,
-            texts=["Light", "Dark", "Use system setting"],
+            texts=[self.tr("LightLabel"), self.tr("DarkLabel"), self.tr("SystemThemeLabel")],
+        )
+
+        self.languageCard = OptionsSettingCard(
+            cfg().language,
+            FIF.LANGUAGE,
+            self.tr("LanguageCardTitle"),
+            None,
+            texts=[self.tr("FollowSystemLabel"), "English", "简体中文"],
         )
 
         self.appearanceGroup.addSettingCard(self.themeCard)
+        self.appearanceGroup.addSettingCard(self.languageCard)
         # Keep the group at its content height so the section below
         # stays adjacent (the group's internal stretch would otherwise
         # absorb all free layout space).
@@ -356,14 +380,14 @@ class SettingsPage(BasePage):
         self.viewLayout.addWidget(self.appearanceGroup)
 
         # --- Advanced heading ---
-        self.advancedGroup = SettingCardGroup("Advanced", self)
+        self.advancedGroup = SettingCardGroup(self.tr("AdvancedGroupTitle"), self)
         self.advancedGroup.setSizePolicy(
             QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed
         )
         self.viewLayout.addWidget(self.advancedGroup)
 
         # --- Network (collapsed by default) ---
-        self.apiGroup = ExpandGroupSettingCard(FIF.WIFI, "Network", None, self)
+        self.apiGroup = ExpandGroupSettingCard(FIF.WIFI, self.tr("NetworkGroupTitle"), None, self)
         self.networkCard = _NetworkCard(self)
         self.serverCard = _ServerUrlCard(self)
         self.tokenCard = _TokenCard(self)
@@ -377,6 +401,7 @@ class SettingsPage(BasePage):
 
     def _connect_signals(self) -> None:
         self.themeCard.optionChanged.connect(self._apply_theme)
+        self.languageCard.optionChanged.connect(self._on_language_changed)
 
     def _apply_theme(self, _key) -> None:
         theme_value = qconfig.get(cfg().themeMode)
@@ -386,3 +411,12 @@ class SettingsPage(BasePage):
             setTheme(Theme.DARK)
         else:
             setTheme(Theme.AUTO)
+
+    def _on_language_changed(self, _key) -> None:
+        """Persist the language choice; a restart is needed to take effect."""
+        InfoBar.info(
+            self.tr("LanguageCardTitle"),
+            self.tr("LanguageRestartTip"),
+            parent=self.window(),
+            duration=4000,
+        )

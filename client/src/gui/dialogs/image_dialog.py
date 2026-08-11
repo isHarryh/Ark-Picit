@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import cv2
 import numpy as np
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import QCoreApplication, Qt, QTimer
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtWidgets import QGridLayout, QLabel
 from qfluentwidgets import (
@@ -16,21 +16,33 @@ from qfluentwidgets import (
     SwitchButton,
 )
 
+from src.app.i18n import fmt
 from src.core.tasks import CanvasLayout
 
 _DISPLAY_WIDTH = 640
 _BLINK_INTERVAL_MS = 400
 
-#: (label, click delay in ms); the default selection is the Normal entry.
+# (click delay in ms, catalog key); the default selection is the Normal entry.
 _SPEED_OPTIONS = (
-    ("Very Fast (17 ms)", 17),
-    ("Fast (34 ms)", 34),
-    ("Normal (67 ms)", 67),
-    ("Slow (100 ms)", 100),
-    ("Very Slow (167 ms)", 167),
+    (17, "SpeedVeryFastFormat"),
+    (34, "SpeedFastFormat"),
+    (67, "SpeedNormalFormat"),
+    (100, "SpeedSlowFormat"),
+    (167, "SpeedVerySlowFormat"),
 )
 
-_SPEED_WARNING = "Fast drawing speeds may cause missed clicks"
+
+def _mark_speed_option_sources() -> None:
+    """Keep the drawing speed keys in the translation catalogs.
+
+    lupdate only extracts literal arguments, so each key is repeated here
+    as a literal ``translate()`` call. Never executed.
+    """
+    QCoreApplication.translate("RegionVerifyDialog", "SpeedVeryFastFormat")
+    QCoreApplication.translate("RegionVerifyDialog", "SpeedFastFormat")
+    QCoreApplication.translate("RegionVerifyDialog", "SpeedNormalFormat")
+    QCoreApplication.translate("RegionVerifyDialog", "SpeedSlowFormat")
+    QCoreApplication.translate("RegionVerifyDialog", "SpeedVerySlowFormat")
 
 
 def _bgr_to_qpixmap(bgr: np.ndarray) -> QPixmap:
@@ -111,30 +123,29 @@ class RegionVerifyDialog(ImageViewerDialog):
         self._markers_visible = False
         super().__init__(
             image_path,
-            title="Region verification",
-            hint="Please confirm the canvas positioning is accurate, then click Start Drawing. "
-            "Blinking red cells differ from the painting.",
-            confirm_text="Start Drawing",
-            cancel_text="Cancel",
+            title=self.tr("RegionVerifyTitle"),
+            hint=self.tr("RegionVerifyTip"),
+            confirm_text=self.tr("StartDrawingButton"),
+            cancel_text=self.tr("CancelButton"),
             parent=parent,
         )
 
-        self.viewLayout.addWidget(CaptionLabel("Drawing Options"))
+        self.viewLayout.addWidget(CaptionLabel(self.tr("DrawingOptionsTitle")))
 
         # Two-column row: incremental toggle and drawing speed, edge-aligned
         self.incrementalSwitch = SwitchButton()
         self.incrementalSwitch.setChecked(True)
-        speed_label = BodyLabel("Drawing speed")
+        speed_label = BodyLabel(self.tr("DrawingSpeedLabel"))
         self.speedCombo = ComboBox()
-        for text, delay_ms in _SPEED_OPTIONS:
-            self.speedCombo.addItem(text, userData=delay_ms)
+        for delay_ms, key in _SPEED_OPTIONS:
+            self.speedCombo.addItem(fmt(self.tr(key), delay_ms), userData=delay_ms)
         self.speedCombo.setCurrentIndex(
-            next(i for i, (_, delay_ms) in enumerate(_SPEED_OPTIONS) if delay_ms == 67)
+            next(i for i, (delay_ms, _) in enumerate(_SPEED_OPTIONS) if delay_ms == 67)
         )
 
         options_grid = QGridLayout()
         options_grid.setHorizontalSpacing(8)
-        options_grid.addWidget(BodyLabel("Incremental painting"), 0, 0)
+        options_grid.addWidget(BodyLabel(self.tr("IncrementalLabel")), 0, 0)
         options_grid.addWidget(self.incrementalSwitch, 0, 1)
         options_grid.addWidget(speed_label, 0, 2)
         options_grid.addWidget(self.speedCombo, 0, 3)
@@ -142,7 +153,7 @@ class RegionVerifyDialog(ImageViewerDialog):
         options_grid.setColumnStretch(3, 1)
         self.viewLayout.addLayout(options_grid)
 
-        self.speedWarnLabel = CaptionLabel(_SPEED_WARNING)
+        self.speedWarnLabel = CaptionLabel(self.tr("SpeedWarningTip"))
         self.viewLayout.addWidget(self.speedWarnLabel)
 
         self._blink_timer = QTimer(self)

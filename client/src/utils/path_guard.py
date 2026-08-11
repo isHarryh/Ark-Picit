@@ -22,21 +22,17 @@ RISKY_SYSTEM = "system"
 RISKY_NOT_WRITABLE = "not-writable"
 
 REASON_TEXT = {
-    RISKY_ROOT: "the drive root (e.g. C:\\)",
-    RISKY_TEMP: "a temporary directory (e.g. the system TEMP folder)",
-    RISKY_SYSTEM: (
-        "a system location (e.g. C:\\Windows, Program Files or the user profile)"
-    ),
-    RISKY_NOT_WRITABLE: (
-        "not writable (e.g. inside Program Files without permission)"
-    ),
+    RISKY_ROOT: "ReasonDriveRoot",
+    RISKY_TEMP: "ReasonTempDir",
+    RISKY_SYSTEM: "ReasonSystemDir",
+    RISKY_NOT_WRITABLE: "ReasonNotWritable",
 }
 
 _TEMP_PREFIXES = ("temp", "tmp")
 
 
 def reason_text(reason: str) -> str:
-    """Return a human-readable explanation for a risk reason."""
+    """Return the catalog key explaining a risk reason (translate at display)."""
     return REASON_TEXT.get(reason, reason)
 
 
