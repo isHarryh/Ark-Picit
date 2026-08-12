@@ -28,7 +28,7 @@ Switch to administrator mode now?</translation>
 <context>
     <name>AnnouncementDialog</name>
     <message>
-        <location filename="../../gui/pages/settings_page.py" line="+114"/>
+        <location filename="../../gui/pages/settings_page.py" line="+113"/>
         <location line="+6"/>
         <source>AnnouncementsTitle</source>
         <translation>Announcements</translation>
@@ -185,24 +185,6 @@ Switch to administrator mode now?</translation>
         <location filename="../../gui/components/color_palette.py" line="+73"/>
         <source>PaletteTitle</source>
         <translation>Palette</translation>
-    </message>
-</context>
-<context>
-    <name>ConfirmImportDialog</name>
-    <message>
-        <location filename="../../gui/dialogs/confirm_import_dialog.py" line="+49"/>
-        <source>CancelButton</source>
-        <translation>Cancel</translation>
-    </message>
-    <message>
-        <location line="-9"/>
-        <source>ConfirmImportTitle</source>
-        <translation>Confirm import</translation>
-    </message>
-    <message>
-        <location line="+8"/>
-        <source>ContinueButton</source>
-        <translation>Continue</translation>
     </message>
 </context>
 <context>
@@ -687,7 +669,7 @@ Switch to administrator mode now?</translation>
         <translation>Explore</translation>
     </message>
     <message>
-        <location line="+169"/>
+        <location line="+171"/>
         <source>ExploreUnavailableTitle</source>
         <translation>Explore is currently unavailable</translation>
     </message>
@@ -702,7 +684,7 @@ Switch to administrator mode now?</translation>
         <translation>You can publish your own artworks from your gallery.</translation>
     </message>
     <message>
-        <location line="-153"/>
+        <location line="-155"/>
         <source>OrderAscending</source>
         <translation>Ascending</translation>
     </message>
@@ -712,13 +694,13 @@ Switch to administrator mode now?</translation>
         <translation>Descending</translation>
     </message>
     <message>
-        <location line="+75"/>
+        <location line="+76"/>
         <source>PageFormat</source>
         <translation>Page %1</translation>
     </message>
     <message>
-        <location line="-96"/>
-        <location line="+147"/>
+        <location line="-97"/>
+        <location line="+149"/>
         <source>RefreshButton</source>
         <translation>Refresh</translation>
     </message>
@@ -729,12 +711,12 @@ Switch to administrator mode now?</translation>
         <translation>Refresh (%1s)</translation>
     </message>
     <message>
-        <location line="-86"/>
+        <location line="-87"/>
         <source>ViewAdmin</source>
         <translation>Admin</translation>
     </message>
     <message>
-        <location line="-70"/>
+        <location line="-71"/>
         <source>ViewMine</source>
         <translation>Mine</translation>
     </message>
@@ -775,7 +757,7 @@ Switch to administrator mode now?</translation>
 <context>
     <name>GalleryPage</name>
     <message>
-        <location filename="../../gui/pages/gallery_page.py" line="+205"/>
+        <location filename="../../gui/pages/gallery_page.py" line="+214"/>
         <source>BackupButton</source>
         <translation>Backup</translation>
     </message>
@@ -1050,18 +1032,18 @@ Switch to administrator mode now?</translation>
         <translation>Cancel</translation>
     </message>
     <message>
-        <location line="-86"/>
+        <location line="-95"/>
         <source>CodeButton</source>
         <translation>Code</translation>
     </message>
     <message>
-        <location line="+37"/>
+        <location line="+46"/>
         <source>ConfirmUploadTitle</source>
         <translation>Confirm upload?</translation>
     </message>
     <message>
-        <location line="-35"/>
-        <location line="+83"/>
+        <location line="-44"/>
+        <location line="+92"/>
         <source>DeleteButton</source>
         <translation>Delete</translation>
     </message>
@@ -1076,7 +1058,7 @@ Switch to administrator mode now?</translation>
         <translation>Delete painting?</translation>
     </message>
     <message>
-        <location line="-102"/>
+        <location line="-111"/>
         <source>DescriptionFormat</source>
         <translation>Description: %1</translation>
     </message>
@@ -1091,7 +1073,7 @@ Switch to administrator mode now?</translation>
         <translation>Publish</translation>
     </message>
     <message>
-        <location line="+51"/>
+        <location line="+60"/>
         <source>PublishFailedTitle</source>
         <translation>Publish failed</translation>
     </message>
@@ -1106,7 +1088,7 @@ Switch to administrator mode now?</translation>
         <translation>Published</translation>
     </message>
     <message>
-        <location line="-58"/>
+        <location line="-67"/>
         <source>RenameButton</source>
         <translation>Rename</translation>
     </message>
@@ -1121,7 +1103,7 @@ Switch to administrator mode now?</translation>
         <translation>Untitled</translation>
     </message>
     <message>
-        <location line="+85"/>
+        <location line="+94"/>
         <source>UploadButton</source>
         <translation>Upload</translation>
     </message>
@@ -1361,7 +1343,7 @@ Please move the program to a normal folder (for example D:\ArkPicit) and start i
     </message>
     <message>
         <location line="-2"/>
-        <location line="+51"/>
+        <location line="+45"/>
         <source>LanguageCardTitle</source>
         <translation>Language</translation>
     </message>
@@ -1371,7 +1353,7 @@ Please move the program to a normal folder (for example D:\ArkPicit) and start i
         <translation>Language changes take effect after restart.</translation>
     </message>
     <message>
-        <location line="-58"/>
+        <location line="-52"/>
         <source>LightLabel</source>
         <translation>Light</translation>
     </message>

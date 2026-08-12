@@ -113,13 +113,6 @@ class PixelCanvas(QWidget):
         self.contentChanged.emit()
         self.update()
 
-    def replace_pic(self, pic: ArkPic) -> None:
-        """Replace the entire painting (pushes undo)."""
-        self._push_undo()
-        self._pic = pic
-        self.contentChanged.emit()
-        self.update()
-
     # ------------------------------------------------------------------
     # Undo / Redo stack
     # ------------------------------------------------------------------

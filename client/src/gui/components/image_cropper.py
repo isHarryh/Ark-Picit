@@ -249,15 +249,9 @@ class ImageCropper(QWidget):
 
         if self._aspect_ratio is not None:
             new_h = max(1, int(c.width() / self._aspect_ratio))
-            if self._drag_mode in ("tl", "bl"):
-                # Keep top or bottom edge, adjust other
-                old_center = self._drag_start_rect.center()
-                c.setHeight(new_h)
-                c.moveCenter(QPoint(c.center().x(), old_center.y()))
-            else:
-                old_center = self._drag_start_rect.center()
-                c.setHeight(new_h)
-                c.moveCenter(QPoint(c.center().x(), old_center.y()))
+            old_center = self._drag_start_rect.center()
+            c.setHeight(new_h)
+            c.moveCenter(QPoint(c.center().x(), old_center.y()))
 
         self._crop_rect = c
         self._clamp_crop()

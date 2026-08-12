@@ -183,10 +183,6 @@ class PlazaClient(QObject):
     # Low-level helpers
     # ------------------------------------------------------------------
 
-    def _guard_reason(self) -> NetworkDisabledReason | None:
-        """Return why network is disabled, or None when requests may proceed."""
-        return self._disabled_reason
-
     def _reject(
         self,
         on_done: Callable[[HttpResult], None] | None,
@@ -224,9 +220,8 @@ class PlazaClient(QObject):
         stays unreachable the call is aborted with an error instead. Requests
         are rejected up front while network communication is disabled.
         """
-        reason = self._guard_reason()
-        if reason is not None:
-            self._reject(on_done, reason)
+        if self._disabled_reason is not None:
+            self._reject(on_done, self._disabled_reason)
             return
 
         def _send() -> None:
@@ -297,7 +292,7 @@ class PlazaClient(QObject):
         *is_start* marks the launch handshake (``?is_start=1``), which the
         server uses to record an activity visit.
         """
-        reason = self._guard_reason()
+        reason = self._disabled_reason
         if reason is not None:
             self._reject(on_done, reason)
             return
@@ -326,8 +321,7 @@ class PlazaClient(QObject):
 
     def fetch_announcements(self) -> None:
         """GET the announcement list; emits ``newAnnouncements`` when it is new."""
-        reason = self._guard_reason()
-        if reason is not None:
+        if self._disabled_reason is not None:
             return
 
         def _handle(result: HttpResult) -> None:

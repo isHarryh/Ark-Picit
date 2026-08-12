@@ -16,7 +16,6 @@ from qfluentwidgets import (
     SettingCardGroup,
     SubtitleLabel,
     SwitchButton,
-    Theme,
     ToolButton,
     qconfig,
     setTheme,
@@ -405,13 +404,7 @@ class SettingsPage(BasePage):
         self.languageCard.optionChanged.connect(self._on_language_changed)
 
     def _apply_theme(self, _key) -> None:
-        theme_value = qconfig.get(cfg().themeMode)
-        if theme_value == Theme.LIGHT:
-            setTheme(Theme.LIGHT)
-        elif theme_value == Theme.DARK:
-            setTheme(Theme.DARK)
-        else:
-            setTheme(Theme.AUTO)
+        setTheme(qconfig.get(cfg().themeMode))
 
     def _on_language_changed(self, _key) -> None:
         """Persist the language choice; a restart is needed to take effect."""

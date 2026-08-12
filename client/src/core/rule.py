@@ -64,14 +64,6 @@ class ArkPicRule:
         """Uint16 hash of the palette, used in ArkPicCode."""
         return rule_hash(self.colors)
 
-    def color_id_of(self, hex_color: str) -> int:
-        """Return the 1-based ID for *hex_color*, or 0 if not in the palette."""
-        target = normalize_hex(hex_color)
-        for i, c in enumerate(self.colors):
-            if c == target:
-                return i + 1
-        return 0
-
     def __repr__(self) -> str:
         return (
             f"ArkPicRule(width={self.width}, height={self.height}, "

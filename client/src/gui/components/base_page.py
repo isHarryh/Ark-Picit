@@ -29,6 +29,3 @@ class BasePage(ScrollArea):
         # a dark native color when the OS is in dark mode, regardless of the app theme.
         self._container.setAutoFillBackground(False)
         self.enableTransparentBackground()
-
-    def add_stretch(self):
-        self.viewLayout.addStretch()

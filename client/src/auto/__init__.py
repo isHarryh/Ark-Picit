@@ -44,7 +44,6 @@ __all__ = [
     "TemplateNotFoundError",
     "WindowInfo",
     "Win32Device",
-    "create_device",
     "find_adb_executable",
     "list_devices",
     "list_windows",
@@ -52,12 +51,3 @@ __all__ = [
     "match_template",
     "probe_emulators",
 ]
-
-
-def create_device(kind: str, **kwargs) -> Device:
-    """Create a device by kind name (``"win32"`` or ``"adb"``)."""
-    if kind == DeviceKind.WIN32.value:
-        return Win32Device(**kwargs)
-    if kind == DeviceKind.ADB.value:
-        return AdbDevice(**kwargs)
-    raise ValueError(f"Unknown device kind: {kind}")

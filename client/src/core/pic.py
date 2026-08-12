@@ -47,13 +47,6 @@ class ArkPic:
             )
         self.grid[y][x] = color_id
 
-    def set_color(self, x: int, y: int, hex_color: str) -> None:
-        """Set the pixel using a hex color string (must exist in the palette)."""
-        cid = self.rule.color_id_of(hex_color)
-        if cid == 0:
-            raise ValueError(f"Color {hex_color!r} not in rule palette")
-        self.set(x, y, cid)
-
     def fill_flat(self, ids: list[int]) -> None:
         """Fill the entire grid from a flat row-major list of color IDs."""
         expected = self.rule.width * self.rule.height

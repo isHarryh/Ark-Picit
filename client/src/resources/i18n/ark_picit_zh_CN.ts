@@ -28,7 +28,7 @@
 <context>
     <name>AnnouncementDialog</name>
     <message>
-        <location filename="../../gui/pages/settings_page.py" line="+114"/>
+        <location filename="../../gui/pages/settings_page.py" line="+113"/>
         <location line="+6"/>
         <source>AnnouncementsTitle</source>
         <translation>公告</translation>
@@ -185,24 +185,6 @@
         <location filename="../../gui/components/color_palette.py" line="+73"/>
         <source>PaletteTitle</source>
         <translation>调色板</translation>
-    </message>
-</context>
-<context>
-    <name>ConfirmImportDialog</name>
-    <message>
-        <location filename="../../gui/dialogs/confirm_import_dialog.py" line="+49"/>
-        <source>CancelButton</source>
-        <translation>取消</translation>
-    </message>
-    <message>
-        <location line="-9"/>
-        <source>ConfirmImportTitle</source>
-        <translation>确认导入</translation>
-    </message>
-    <message>
-        <location line="+8"/>
-        <source>ContinueButton</source>
-        <translation>继续</translation>
     </message>
 </context>
 <context>
@@ -687,7 +669,7 @@
         <translation>探索</translation>
     </message>
     <message>
-        <location line="+169"/>
+        <location line="+171"/>
         <source>ExploreUnavailableTitle</source>
         <translation>探索功能目前不可用</translation>
     </message>
@@ -702,7 +684,7 @@
         <translation>您可在画廊中选择您的作品发布。</translation>
     </message>
     <message>
-        <location line="-153"/>
+        <location line="-155"/>
         <source>OrderAscending</source>
         <translation>升序</translation>
     </message>
@@ -712,13 +694,13 @@
         <translation>降序</translation>
     </message>
     <message>
-        <location line="+75"/>
+        <location line="+76"/>
         <source>PageFormat</source>
         <translation>第 %1 页</translation>
     </message>
     <message>
-        <location line="-96"/>
-        <location line="+147"/>
+        <location line="-97"/>
+        <location line="+149"/>
         <source>RefreshButton</source>
         <translation>刷新</translation>
     </message>
@@ -729,12 +711,12 @@
         <translation>刷新（%1 秒）</translation>
     </message>
     <message>
-        <location line="-86"/>
+        <location line="-87"/>
         <source>ViewAdmin</source>
         <translation>管理</translation>
     </message>
     <message>
-        <location line="-70"/>
+        <location line="-71"/>
         <source>ViewMine</source>
         <translation>我的</translation>
     </message>
@@ -775,7 +757,7 @@
 <context>
     <name>GalleryPage</name>
     <message>
-        <location filename="../../gui/pages/gallery_page.py" line="+205"/>
+        <location filename="../../gui/pages/gallery_page.py" line="+214"/>
         <source>BackupButton</source>
         <translation>备份</translation>
     </message>
@@ -1048,18 +1030,18 @@
         <translation>取消</translation>
     </message>
     <message>
-        <location line="-86"/>
+        <location line="-95"/>
         <source>CodeButton</source>
         <translation>分享码</translation>
     </message>
     <message>
-        <location line="+37"/>
+        <location line="+46"/>
         <source>ConfirmUploadTitle</source>
         <translation>确认上传？</translation>
     </message>
     <message>
-        <location line="-35"/>
-        <location line="+83"/>
+        <location line="-44"/>
+        <location line="+92"/>
         <source>DeleteButton</source>
         <translation>删除</translation>
     </message>
@@ -1074,7 +1056,7 @@
         <translation>删除画作？</translation>
     </message>
     <message>
-        <location line="-102"/>
+        <location line="-111"/>
         <source>DescriptionFormat</source>
         <translation>描述：%1</translation>
     </message>
@@ -1089,7 +1071,7 @@
         <translation>发布</translation>
     </message>
     <message>
-        <location line="+51"/>
+        <location line="+60"/>
         <source>PublishFailedTitle</source>
         <translation>发布失败</translation>
     </message>
@@ -1104,7 +1086,7 @@
         <translation>已发布</translation>
     </message>
     <message>
-        <location line="-58"/>
+        <location line="-67"/>
         <source>RenameButton</source>
         <translation>重命名</translation>
     </message>
@@ -1119,7 +1101,7 @@
         <translation>未命名</translation>
     </message>
     <message>
-        <location line="+85"/>
+        <location line="+94"/>
         <source>UploadButton</source>
         <translation>上传</translation>
     </message>
@@ -1360,7 +1342,7 @@
     </message>
     <message>
         <location line="-2"/>
-        <location line="+51"/>
+        <location line="+45"/>
         <source>LanguageCardTitle</source>
         <translation>语言 / Language</translation>
     </message>
@@ -1370,7 +1352,7 @@
         <translation>语言更改将在重启后生效。</translation>
     </message>
     <message>
-        <location line="-58"/>
+        <location line="-52"/>
         <source>LightLabel</source>
         <translation>浅色</translation>
     </message>
