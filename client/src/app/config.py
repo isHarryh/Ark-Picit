@@ -35,6 +35,7 @@ class AppConfig(QConfig):
     exploreToken = ConfigItem("API", "ExploreToken", "")
     exploreClientToken = ConfigItem("API", "ExploreClientToken", "")
     announcementHash = ConfigItem("API", "AnnouncementHash", "")
+    readAnnouncementHashes = ConfigItem("API", "ReadAnnouncementHashes", "")
     networkEnabled = ConfigItem("API", "NetworkEnabled", True)
 
 

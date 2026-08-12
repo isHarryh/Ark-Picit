@@ -28,13 +28,13 @@ Switch to administrator mode now?</translation>
 <context>
     <name>AnnouncementDialog</name>
     <message>
-        <location filename="../../gui/pages/settings_page.py" line="+113"/>
+        <location filename="../../gui/pages/settings_page.py" line="+174"/>
         <location line="+6"/>
         <source>AnnouncementsTitle</source>
         <translation>Announcements</translation>
     </message>
     <message>
-        <location line="+23"/>
+        <location line="+19"/>
         <location line="+28"/>
         <source>CloseButton</source>
         <translation>Close</translation>
@@ -45,7 +45,7 @@ Switch to administrator mode now?</translation>
         <translation>Close (%1s)</translation>
     </message>
     <message>
-        <location line="-27"/>
+        <location line="-29"/>
         <source>NoAnnouncementsTip</source>
         <translation>No announcements at this time.</translation>
     </message>
@@ -53,7 +53,7 @@ Switch to administrator mode now?</translation>
 <context>
     <name>AnnouncementManagerDialog</name>
     <message>
-        <location line="+69"/>
+        <location line="+71"/>
         <source>AddAnnouncementButton</source>
         <translation>Add announcement</translation>
     </message>
@@ -1710,7 +1710,7 @@ Click a button above to begin.</translation>
 <context>
     <name>_AboutCard</name>
     <message>
-        <location filename="../../gui/pages/settings_page.py" line="-293"/>
+        <location filename="../../gui/pages/settings_page.py" line="-338"/>
         <source>AboutTitle</source>
         <translation>About</translation>
     </message>
@@ -1750,7 +1750,7 @@ Click a button above to begin.</translation>
 <context>
     <name>_ServerUrlCard</name>
     <message>
-        <location line="+191"/>
+        <location line="+236"/>
         <source>ServerUrlTitle</source>
         <translation>API base URL</translation>
     </message>

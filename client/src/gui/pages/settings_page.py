@@ -1,10 +1,20 @@
 """Settings page: theme and advanced API settings."""
 
+import re
+
 from PySide6.QtCore import Qt, QTimer, QUrl
 from PySide6.QtGui import QDesktopServices
-from PySide6.QtWidgets import QDialog, QHBoxLayout, QScrollArea, QSizePolicy, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (
+    QDialog,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QScrollArea,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
 from qfluentwidgets import (
-    BodyLabel,
     CaptionLabel,
     ExpandGroupSettingCard,
     InfoBar,
@@ -33,6 +43,9 @@ from src.gui.components.base_page import BasePage
 
 _REPOSITORY_URL = "https://github.com/isHarryh/Ark-Picit"
 _ISSUE_URL = f"{_REPOSITORY_URL}/issues/new"
+
+_ACCENT_COLOR = "#0078D7"
+_URL_RE = re.compile(r"https?://[^\s]+")
 
 
 class _AnnouncementCard(SettingCard):
@@ -99,8 +112,57 @@ class _NetworkCard(SettingCard):
         plaza.set_network_enabled(not checked)
 
 
+def _announce_text(item) -> str:
+    """Normalize an announcement payload item to its display text."""
+    if isinstance(item, dict):
+        return str(item.get("title") or item.get("content") or item)
+    return str(item)
+
+
+def _linkify(text: str) -> str:
+    """Escape HTML and wrap bare http(s) URLs in anchor tags for QLabel rich text."""
+    escaped = (
+        text.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+    )
+    return _URL_RE.sub(lambda m: f'<a href="{m.group(0)}">{m.group(0)}</a>', escaped)
+
+
+class _AnnouncementItemCard(QFrame):
+    """A single announcement row: accent color bar + auto-wrapping rich text."""
+
+    def __init__(self, index: int, text: str, parent=None):
+        super().__init__(parent)
+        self.setObjectName("announcementCard")
+        self.setStyleSheet(
+            "#announcementCard { background: rgba(0, 0, 0, 0.03); border-radius: 6px; }"
+            "QWidget { background: transparent; }"
+        )
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        # Left accent color bar
+        bar = QFrame(self)
+        bar.setFixedWidth(4)
+        bar.setStyleSheet(f"background: {_ACCENT_COLOR}; border-top-left-radius: 6px; border-bottom-left-radius: 6px;")
+        layout.addWidget(bar)
+
+        # Right text area: "N. <rich text with auto links>"
+        label = QLabel(self)
+        label.setTextFormat(Qt.TextFormat.RichText)
+        label.setWordWrap(True)
+        label.setOpenExternalLinks(True)
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+        label.setText(f"<b>{index}.</b> {_linkify(text)}")
+        label.setContentsMargins(12, 8, 12, 8)
+        layout.addWidget(label, 1)
+
+
 class AnnouncementDialog(QDialog):
-    """Shows the server announcements, one item per row.
+    """Shows the server announcements as cards in a scrollable area.
 
     With a positive ``hold_seconds`` the close button stays disabled (and ESC /
     the window close button are ignored) until that many seconds have elapsed,
@@ -118,40 +180,36 @@ class AnnouncementDialog(QDialog):
         root.setSpacing(12)
         root.addWidget(SubtitleLabel(self.tr("AnnouncementsTitle")))
 
-        if announcements:
-            scroll = QScrollArea(self)
-            scroll.setWidgetResizable(True)
-            content = QWidget()
-            column = QVBoxLayout(content)
-            column.setContentsMargins(0, 0, 0, 0)
-            column.setSpacing(8)
-            for index, item in enumerate(announcements, 1):
-                text = (
-                    str(item.get("title") or item.get("content") or item)
-                    if isinstance(item, dict)
-                    else str(item)
-                )
-                column.addWidget(BodyLabel(f"{index}. {text}"))
-            column.addStretch()
-            scroll.setWidget(content)
-            root.addWidget(scroll, 1)
+        scroll = QScrollArea(self)
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        content = QWidget()
+        column = QVBoxLayout(content)
+        column.setContentsMargins(0, 0, 0, 0)
+        column.setSpacing(8)
+        items = [_announce_text(item) for item in announcements]
+        if items:
+            for index, text in enumerate(items, 1):
+                column.addWidget(_AnnouncementItemCard(index, text, self))
         else:
-            root.addWidget(CaptionLabel(self.tr("NoAnnouncementsTip")))
-            root.addStretch()
+            column.addWidget(CaptionLabel(self.tr("NoAnnouncementsTip")))
+        column.addStretch()
+        scroll.setWidget(content)
+        root.addWidget(scroll, 1)
 
-        closeBtn = PushButton(FIF.CLOSE, self.tr("CloseButton"))
-        closeBtn.clicked.connect(self.accept)
+        self._closeBtn = PushButton(FIF.CLOSE, self.tr("CloseButton"))
+        self._closeBtn.clicked.connect(self.accept)
+        buttons = QHBoxLayout()
+        buttons.addStretch()
+        buttons.addWidget(self._closeBtn)
+        root.addLayout(buttons)
+
         if self._hold_remaining:
-            self._closeBtn = closeBtn
             self._update_close_btn()
             self._holdTimer = QTimer(self)
             self._holdTimer.setInterval(1000)
             self._holdTimer.timeout.connect(self._on_hold_tick)
             self._holdTimer.start()
-        buttons = QHBoxLayout()
-        buttons.addStretch()
-        buttons.addWidget(closeBtn)
-        root.addLayout(buttons)
 
     def _on_hold_tick(self) -> None:
         self._hold_remaining -= 1

@@ -118,6 +118,7 @@ class PlazaClient(QObject):
         self._reported: set[str] = set()
         self._admin_changes: dict[str, int] = {}
         self._announcements: list = []
+        self._pending_unread: list[str] = []
         self._disabled_reason: NetworkDisabledReason | None = (
             None if qconfig.get(cfg().networkEnabled) else NetworkDisabledReason.USER_DISABLED
         )
@@ -155,6 +156,20 @@ class PlazaClient(QObject):
 
     def announcements(self) -> list:
         return self._announcements
+
+    def pending_unread_announcements(self) -> list[str]:
+        """Return the unread announcement texts (copy); empty when all are read."""
+        return list(self._pending_unread)
+
+    def mark_pending_as_read(self) -> None:
+        """Persist the pending unread announcement hashes and clear the list."""
+        if not self._pending_unread:
+            return
+        existing = {h for h in str(qconfig.get(cfg().readAnnouncementHashes)).split(",") if h}
+        for text in self._pending_unread:
+            existing.add(_announcement_hash(text))
+        qconfig.set(cfg().readAnnouncementHashes, ",".join(sorted(existing)))
+        self._pending_unread = []
 
     def rating_value(self, content: str) -> int | None:
         return self._rated.get(content)
@@ -320,7 +335,7 @@ class PlazaClient(QObject):
         )
 
     def fetch_announcements(self) -> None:
-        """GET the announcement list; emits ``newAnnouncements`` when it is new."""
+        """GET the announcement list; emits ``newAnnouncements`` when any item is unread."""
         if self._disabled_reason is not None:
             return
 
@@ -329,7 +344,14 @@ class PlazaClient(QObject):
                 return
             announcements = result.data.get("announcements") or []
             self._announcements = announcements
-            if self._record_announcement_hash(announcements):
+            self._record_announcement_hash(announcements)
+            read_hashes = {h for h in str(qconfig.get(cfg().readAnnouncementHashes)).split(",") if h}
+            unread = [
+                _announce_text(item) for item in announcements
+                if _announcement_hash(_announce_text(item)) not in read_hashes
+            ]
+            if unread:
+                self._pending_unread = unread
                 self.newAnnouncements.emit()
 
         self._net.request_json(
@@ -338,15 +360,12 @@ class PlazaClient(QObject):
             on_done=_handle,
         )
 
-    def _record_announcement_hash(self, announcements: list) -> bool:
-        """Persist the hash of the whole announcement set; True when it is new."""
+    def _record_announcement_hash(self, announcements: list) -> None:
+        """Persist the hash of the whole announcement set (debug/audit only)."""
         digest = hashlib.sha256(
             json.dumps(announcements, ensure_ascii=False, sort_keys=True).encode("utf-8")
         ).hexdigest()
-        if digest == str(qconfig.get(cfg().announcementHash)):
-            return False
         qconfig.set(cfg().announcementHash, digest)
-        return True
 
     # ------------------------------------------------------------------
     # API methods
@@ -449,6 +468,23 @@ class PlazaClient(QObject):
             client_auth=True,
             on_done=on_done,
         )
+
+
+def _announce_text(item) -> str:
+    """Normalize an announcement payload item to its display text.
+
+    The server protocol carries announcements as plain strings, but legacy or
+    foreign servers may emit dicts (``{"title": ...}`` / ``{"content": ...}``);
+    both shapes degrade gracefully to the raw string.
+    """
+    if isinstance(item, dict):
+        return str(item.get("title") or item.get("content") or item)
+    return str(item)
+
+
+def _announcement_hash(text: str) -> str:
+    """Return a stable short hash (sha256 prefix) identifying announcement text."""
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
 
 
 plaza = PlazaClient()

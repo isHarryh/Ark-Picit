@@ -85,5 +85,9 @@ class MainWindow(FluentWindow):
         from src.app.plaza import plaza
         from src.gui.pages.settings_page import AnnouncementDialog
 
-        dialog = AnnouncementDialog(plaza.announcements(), self, hold_seconds=3)
+        unread = plaza.pending_unread_announcements()
+        if not unread:
+            return
+        dialog = AnnouncementDialog(unread, self, hold_seconds=5)
         dialog.exec()
+        plaza.mark_pending_as_read()
