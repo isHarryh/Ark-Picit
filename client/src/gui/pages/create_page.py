@@ -578,6 +578,7 @@ class CreatePage(BasePage):
     @Slot(object)
     def _apply_imported_canvas(self, pic: ArkPic) -> None:
         self.btnImport.button.setEnabled(True)
+        self.bring_app_to_front()
         if not self._confirm_overwrite_current():
             return
         self._pic = pic
@@ -595,6 +596,7 @@ class CreatePage(BasePage):
     @Slot(object)
     def _show_import_error(self, message: UserMessage) -> None:
         self.btnImport.button.setEnabled(True)
+        self.bring_app_to_front()
         InfoBar.error(
             self.tr("ImportFailedTitle"), localize_message(message),
             parent=self, duration=5000,

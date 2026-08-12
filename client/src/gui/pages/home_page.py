@@ -139,11 +139,8 @@ class HomePage(BasePage):
                 layout.canvas.y,
             )
         )
-        window = self.window()
-        window.showNormal()
-        window.raise_()
-        window.activateWindow()
-        dialog = RegionVerifyDialog(image_path, layout, diff_cells, parent=window)
+        self.bring_app_to_front()
+        dialog = RegionVerifyDialog(image_path, layout, diff_cells, parent=self.window())
         if dialog.exec():
             gameTask.start_drawing(
                 incremental=dialog.incremental_enabled,

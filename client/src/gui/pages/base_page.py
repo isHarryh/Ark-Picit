@@ -67,3 +67,9 @@ class BasePage(ScrollArea):
     def switch_to_settings(self) -> None:
         window = self._app_window()
         window.switchTo(window.settingsPage)
+
+    def bring_app_to_front(self) -> None:
+        window = self.window()
+        window.showNormal()
+        window.raise_()
+        window.activateWindow()
