@@ -1,6 +1,7 @@
 """Plaza database models (SQLModel)."""
 
 from datetime import datetime
+from typing import ClassVar
 
 from sqlmodel import Field, SQLModel, UniqueConstraint
 
@@ -14,7 +15,7 @@ ALL_STATUSES = (STATUS_NORMAL, STATUS_REVIEWING, STATUS_DELETED_BY_USER, STATUS_
 class Client(SQLModel, table=True):
     """A device identity issued via the meta endpoint; tokens gate writes."""
 
-    __tablename__ = "clients"
+    __tablename__: ClassVar[str] = "clients"
 
     id: int | None = Field(default=None, primary_key=True)
     ip: str = Field(index=True)
@@ -25,7 +26,7 @@ class Client(SQLModel, table=True):
 class Artwork(SQLModel, table=True):
     """A published painting (content is the ArkPicCode text)."""
 
-    __tablename__ = "artworks"
+    __tablename__: ClassVar[str] = "artworks"
 
     id: int | None = Field(default=None, primary_key=True)
     ip: str = Field(index=True)
@@ -43,7 +44,7 @@ class Artwork(SQLModel, table=True):
 class Rating(SQLModel, table=True):
     """One thumbs up/down per IP per artwork."""
 
-    __tablename__ = "ratings"
+    __tablename__: ClassVar[str] = "ratings"
 
     id: int | None = Field(default=None, primary_key=True)
     ip: str = Field(index=True)
@@ -57,7 +58,7 @@ class Rating(SQLModel, table=True):
 class Report(SQLModel, table=True):
     """One report per IP per artwork."""
 
-    __tablename__ = "reports"
+    __tablename__: ClassVar[str] = "reports"
 
     id: int | None = Field(default=None, primary_key=True)
     ip: str = Field(index=True)
@@ -71,7 +72,7 @@ class Report(SQLModel, table=True):
 class Announcement(SQLModel, table=True):
     """Single-row table holding the current announcement list (JSON in ``content``)."""
 
-    __tablename__ = "announcements"
+    __tablename__: ClassVar[str] = "announcements"
 
     id: int = Field(default=1, primary_key=True)
     content: str = Field(default="[]")
@@ -85,7 +86,7 @@ class Visit(SQLModel, table=True):
     empty when the header is absent.
     """
 
-    __tablename__ = "visits"
+    __tablename__: ClassVar[str] = "visits"
 
     id: int | None = Field(default=None, primary_key=True)
     ip: str = Field(index=True)

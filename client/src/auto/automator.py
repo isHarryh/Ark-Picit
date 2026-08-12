@@ -24,6 +24,7 @@ from src.auto.base import (
     MatchTimeoutError,
     Point,
     Region,
+    ScaleMode,
 )
 from src.auto.vision import load_template, match_color, match_template
 from src.utils.paths import ASSETS_DIR
@@ -61,7 +62,7 @@ class Automator:
         device: Device,
         *,
         scale_target: int = 720,
-        scale_mode: str = "short",
+        scale_mode: ScaleMode = "short",
         fps_limit: float = 10.0,
     ):
         self._device = device

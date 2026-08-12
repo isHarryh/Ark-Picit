@@ -64,7 +64,7 @@ def match_color(
     target = np.array(color, dtype=np.int16)
     difference = np.abs(screen.astype(np.int16) - target).max(axis=2)
     mask = (difference <= tolerance).astype(np.float32)
-    integral = cv2.integral(mask, cv2.CV_32F)
+    integral = cv2.integral(mask, sdepth=cv2.CV_32F)
     window_sums = (
         integral[window_height:, window_width:]
         - integral[window_height:, :-window_width]
@@ -78,7 +78,7 @@ def match_color(
     offset_x = roi.x if roi is not None else 0
     offset_y = roi.y if roi is not None else 0
     return MatchResult(
-        Point(best_x + offset_x, best_y + offset_y),
+        Point(int(best_x) + offset_x, int(best_y) + offset_y),
         best_score,
         window_width,
         window_height,

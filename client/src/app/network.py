@@ -91,7 +91,7 @@ class NetworkClient(QObject):
         def _finished() -> None:
             timer.stop()
             status = reply.attribute(QNetworkRequest.Attribute.HttpStatusCodeAttribute) or 0
-            raw = bytes(reply.readAll())
+            raw = bytes(reply.readAll().data())
             data = None
             if raw:
                 try:
