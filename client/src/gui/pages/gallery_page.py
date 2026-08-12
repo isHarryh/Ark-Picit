@@ -25,9 +25,9 @@ from qfluentwidgets import (
 from src.app.i18n import fmt, localize_http_error
 from src.app.signal_bus import signalBus
 from src.core import storage
-from src.gui.components.base_page import BasePage
 from src.gui.components.empty_state import EmptyStateWidget
 from src.gui.dialogs.rename_dialog import RenameDialog
+from src.gui.pages.base_page import BasePage
 
 
 def _format_saved_time(value: str) -> str:
@@ -218,18 +218,13 @@ class GalleryPage(BasePage):
         self.viewLayout.addLayout(header)
 
         self.emptyState = EmptyStateWidget()
-        self.emptyState.actionBtn.clicked.connect(self._go_create)
+        self.emptyState.actionBtn.clicked.connect(self.switch_to_create)
         self.viewLayout.addWidget(self.emptyState)
 
         self.cardsLayout = QVBoxLayout()
         self.cardsLayout.setSpacing(8)
         self.viewLayout.addLayout(self.cardsLayout)
         self.viewLayout.addStretch()
-
-    def _go_create(self) -> None:
-        """Switch to the create page."""
-        window = self.window()
-        window.switchTo(window.createPage)
 
     def _connect_signals(self) -> None:
         self.searchEdit.textChanged.connect(self._filter)

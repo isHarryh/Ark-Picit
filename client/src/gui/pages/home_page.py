@@ -18,9 +18,9 @@ from src.app.device_manager import deviceManager
 from src.app.i18n import fmt, localize_message
 from src.auto import DeviceKind
 from src.core.tasks import gameTask
-from src.gui.components.base_page import BasePage
 from src.gui.dialogs.device_dialog import browse_and_connect
 from src.gui.dialogs.image_dialog import RegionVerifyDialog
+from src.gui.pages.base_page import BasePage
 
 
 class HomePage(BasePage):
@@ -45,9 +45,9 @@ class HomePage(BasePage):
 
         btn_row = QHBoxLayout()
         self.btnNew = PrimaryPushButton(FIF.EDIT, self.tr("GoToCreateButton"))
-        self.btnNew.clicked.connect(self._go_create)
+        self.btnNew.clicked.connect(self.switch_to_create)
         self.btnOpenGallery = PushButton(FIF.PHOTO, self.tr("OpenGalleryButton"))
-        self.btnOpenGallery.clicked.connect(self._open_gallery)
+        self.btnOpenGallery.clicked.connect(self.switch_to_gallery)
         btn_row.addWidget(self.btnNew)
         btn_row.addWidget(self.btnOpenGallery)
         btn_row.addStretch()
@@ -87,16 +87,6 @@ class HomePage(BasePage):
         gameTask.succeeded.connect(self._on_task_succeeded)
         gameTask.drawingFinished.connect(self._on_drawing_finished)
         gameTask.failed.connect(self._on_task_failed)
-
-    def _go_create(self) -> None:
-        """Switch to the create page without resetting the current canvas."""
-        window = self.window()
-        window.switchTo(window.createPage)
-
-    def _open_gallery(self) -> None:
-        """Switch to the gallery page."""
-        window = self.window()
-        window.switchTo(window.galleryPage)
 
     # ------------------------------------------------------------------
     # Device status

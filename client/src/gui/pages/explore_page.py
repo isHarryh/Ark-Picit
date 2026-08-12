@@ -32,9 +32,9 @@ from src.app.network import HttpResult
 from src.app.plaza import SORT_OPTIONS, STATUS_COUNT, plaza, sort_label, status_label
 from src.core.preview import generate_preview
 from src.core.rulesets import decode_any_ruleset
-from src.gui.components.base_page import BasePage
 from src.gui.components.empty_state import EmptyStateWidget
 from src.gui.dialogs.explore_dialog import ExploreDetailDialog
+from src.gui.pages.base_page import BasePage
 
 _PAGE_SIZE = 20
 _CARD_WIDTH = 150
@@ -113,10 +113,10 @@ class AdminView(ExploreView):
         )
 
     def sort_by(self, page: "ExplorePage") -> str:
-        return page.sortCombo.currentData()
+        return str(page.sortCombo.currentData() or "")
 
     def order(self, page: "ExplorePage") -> str:
-        return page.orderCombo.currentData()
+        return str(page.orderCombo.currentData() or "")
 
 
 class ArtworkCard(QWidget):
@@ -342,7 +342,8 @@ class ExplorePage(BasePage):
         self._view.configure_controls(self)
 
     def _on_view_changed(self, _index: int) -> None:
-        self._view = self._views.get(self.viewCombo.currentData(), self._views["random"])
+        key = self.viewCombo.currentData()
+        self._view = self._views.get(key, self._views["random"]) if key is not None else self._views["random"]
         self._page = 1
         self._view.configure_controls(self)
         self.refresh()
@@ -407,6 +408,8 @@ class ExplorePage(BasePage):
         return self._cooldown is None
 
     def _on_cooldown_tick(self) -> None:
+        if self._cooldown is None:
+            return
         self._cooldown -= 1
         if self._cooldown <= 0:
             self._cooldownTimer.stop()

@@ -29,9 +29,9 @@ from src.app.i18n import fmt, localize_message
 from src.app.signal_bus import signalBus
 from src.core import ArkPic, ArkPicRule, CodeError, CodeMismatchError, decode, encode, storage
 from src.core.rulesets import ALL_RULESETS, RuleCN2026Aug
-from src.gui.components.base_page import BasePage
 from src.gui.components.color_palette import ColorPalette
 from src.gui.components.pixel_canvas import PixelCanvas
+from src.gui.pages.base_page import BasePage
 from src.utils.user_message import UserMessage
 
 logger = logging.getLogger(__name__)
@@ -217,17 +217,12 @@ class CreatePage(BasePage):
     def _setup_import_menu(self) -> None:
         """Attach the import actions to the Import button's drop-down menu."""
         menu = RoundMenu(parent=self)
-        menu.addAction(
-            QAction(FIF.CODE.icon(), self.tr("ImportFromCodeAction"), self, triggered=self._on_import_code)
-        )
-        menu.addAction(
-            QAction(
-                FIF.BRUSH.icon(),
-                self.tr("ImportFromGameAction"),
-                self,
-                triggered=self._on_import_game_canvas,
-            )
-        )
+        import_code = QAction(FIF.CODE.icon(), self.tr("ImportFromCodeAction"), self)
+        import_code.triggered.connect(self._on_import_code)
+        menu.addAction(import_code)
+        import_game = QAction(FIF.BRUSH.icon(), self.tr("ImportFromGameAction"), self)
+        import_game.triggered.connect(self._on_import_game_canvas)
+        menu.addAction(import_game)
         self.btnImport.setFlyout(menu)
 
     # ------------------------------------------------------------------
@@ -238,8 +233,11 @@ class CreatePage(BasePage):
         """Recreate the canvas widget (dynamically sized)."""
         while self.canvasHolder.count():
             item = self.canvasHolder.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            if item is None:
+                break
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
 
         self._canvas = PixelCanvas(self._pic)
         self._canvas.contentChanged.connect(self._update_save_state)
@@ -279,8 +277,11 @@ class CreatePage(BasePage):
         # Remove old palette
         while self.paletteHolder.count():
             item = self.paletteHolder.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            if item is None:
+                break
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
         self._palette = ColorPalette(self._rule)
         self._palette.colorSelected.connect(self._on_color_selected)
         self.paletteHolder.addWidget(self._palette)
@@ -538,7 +539,7 @@ class CreatePage(BasePage):
         )
         box.yesButton.setText(self.tr("OverwriteButton"))
         box.cancelButton.setText(self.tr("CancelButton"))
-        return box.exec()
+        return bool(box.exec())
 
     def _on_import_game_canvas(self) -> None:
         """Read the current in-game canvas and load it into the editor."""
@@ -636,6 +637,5 @@ class CreatePage(BasePage):
         """Switch to the home page and start the paint task on *device*."""
         from src.core.tasks import gameTask
 
-        window = self.window()
-        window.switchTo(window.homePage)
+        self.switch_to_home()
         gameTask.start(device, self._rule, self._pic)

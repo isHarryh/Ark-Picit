@@ -39,7 +39,7 @@ from src.app.dist import app_version
 from src.app.i18n import fmt, localize_http_error
 from src.app.network import HttpResult
 from src.app.plaza import NetworkDisabledReason, plaza
-from src.gui.components.base_page import BasePage
+from src.gui.pages.base_page import BasePage
 
 _REPOSITORY_URL = "https://github.com/isHarryh/Ark-Picit"
 _ISSUE_URL = f"{_REPOSITORY_URL}/issues/new"
@@ -445,7 +445,7 @@ class SettingsPage(BasePage):
         self.viewLayout.addWidget(self.advancedGroup)
 
         # --- Network (collapsed by default) ---
-        self.apiGroup = ExpandGroupSettingCard(FIF.WIFI, self.tr("NetworkGroupTitle"), None, self)
+        self.apiGroup = ExpandGroupSettingCard(FIF.WIFI, self.tr("NetworkGroupTitle"), "", self)
         self.networkCard = _NetworkCard(self)
         self.serverCard = _ServerUrlCard(self)
         self.tokenCard = _TokenCard(self)
