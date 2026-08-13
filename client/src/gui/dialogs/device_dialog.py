@@ -8,7 +8,7 @@ instead of being removed.
 """
 
 from PySide6.QtCore import QCoreApplication, QRectF, Qt
-from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPen, QPixmap
+from PySide6.QtGui import QBrush, QColor, QFont, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QListWidget, QListWidgetItem, QStackedWidget, QVBoxLayout, QWidget
 from qfluentwidgets import (
     BodyLabel,
@@ -28,8 +28,6 @@ from src.utils.win_admin import is_admin, relaunch_as_admin
 
 _browsing = False
 
-RECOMMENDED_KEYWORDS = ("明日方舟", "arknights")
-
 
 def _smartphone_icon() -> QIcon:
     """Return a theme-aware smartphone icon drawn with QPainter."""
@@ -46,14 +44,6 @@ def _smartphone_icon() -> QIcon:
     painter.drawRoundedRect(QRectF(12.5, 7.5, 7, 16), 1.5, 1.5)
     painter.end()
     return QIcon(pixmap)
-
-
-def _is_recommended(candidate: DeviceCandidate) -> bool:
-    """Return whether a window candidate should be in the recommended group."""
-    if candidate.kind is not DeviceKind.WIN32:
-        return False
-    lowered = candidate.label.lower()
-    return any(keyword in lowered for keyword in RECOMMENDED_KEYWORDS)
 
 
 class DeviceDialog(MessageBoxBase):
@@ -83,9 +73,10 @@ class DeviceDialog(MessageBoxBase):
         self._progress.setFixedSize(32, 32)
         self._loadingTitle = BodyLabel(self.tr("SearchingDevicesTitle"), self)
         self._loadingTitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._hint = CaptionLabel(self.tr("SearchingDevicesTip"), self)
+        self._hint = CaptionLabel(self)
         self._hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._hint.setWordWrap(True)
+        self._hint.hide()
         self._loadingPage = QWidget(self)
         self._loadingPage.setMinimumHeight(260)
         loading_vbox = QVBoxLayout(self._loadingPage)
@@ -93,7 +84,6 @@ class DeviceDialog(MessageBoxBase):
         loading_vbox.addWidget(self._progress, 0, Qt.AlignmentFlag.AlignHCenter)
         loading_vbox.addSpacing(12)
         loading_vbox.addWidget(self._loadingTitle)
-        loading_vbox.addSpacing(2)
         loading_vbox.addWidget(self._hint)
         loading_vbox.addStretch(1)
         self._stack.addWidget(self._loadingPage)
@@ -103,6 +93,7 @@ class DeviceDialog(MessageBoxBase):
         self.yesButton.setText(self.tr("ConnectButton"))
         self.cancelButton.setText(self.tr("CancelButton"))
         self.listWidget.itemDoubleClicked.connect(lambda _item: self.accept())
+        self.listWidget.currentItemChanged.connect(self._on_current_changed)
 
         if candidates is None:
             self.yesButton.setEnabled(False)
@@ -115,7 +106,6 @@ class DeviceDialog(MessageBoxBase):
         """Populate the list with discovered candidates, replacing the loading state."""
         self._stack.setCurrentWidget(self.listWidget)
         self._progress.stop()
-        self.yesButton.setEnabled(True)
         self._populate(candidates)
 
     def set_error(self, message: str) -> None:
@@ -124,6 +114,7 @@ class DeviceDialog(MessageBoxBase):
         self._progress.hide()
         self._loadingTitle.setText(self.tr("SearchFailedTitle"))
         self._hint.setText(message)
+        self._hint.show()
 
     def validate(self) -> bool:
         """Only accept the dialog when a device candidate is selected."""
@@ -131,22 +122,56 @@ class DeviceDialog(MessageBoxBase):
 
     def _populate(self, candidates: list[DeviceCandidate]) -> None:
         adbs = [c for c in candidates if c.kind is DeviceKind.ADB]
-        recommended = [c for c in candidates if _is_recommended(c)]
+        win32s = sorted(
+            (c for c in candidates if c.kind is DeviceKind.WIN32),
+            key=lambda c: c.score,
+            reverse=True,
+        )
+        recommended = [c for c in win32s if c.score >= 2]
 
+        priority_row: int | None = None
+
+        before_adb = self.listWidget.count()
         self._add_group(
             self.tr("AdbDevicesGroup"), adbs,
             self.tr("NoAdbDevicesEmpty"),
         )
+        priority_row = self._first_candidate_row(before_adb)
+
+        before_recommended = self.listWidget.count()
         self._add_group(
             self.tr("RecommendedWindowsGroup"), recommended,
             self.tr("NoGameWindowEmpty"),
         )
+        if priority_row is None:
+            priority_row = self._first_candidate_row(before_recommended)
 
-        for row in range(self.listWidget.count()):
-            item = self.listWidget.item(row)
-            if item.data(Qt.ItemDataRole.UserRole) is not None:
-                self.listWidget.setCurrentRow(row)
-                break
+        if not recommended:
+            other = [c for c in win32s if c.score >= 1]
+            self._add_group(
+                self.tr("OtherWindowsGroup"), other,
+                self.tr("NoGameWindowEmpty"),
+            )
+
+        if priority_row is not None:
+            self.listWidget.setCurrentRow(priority_row)
+        else:
+            self.yesButton.setEnabled(False)
+
+    def _first_candidate_row(self, start: int) -> int | None:
+        for row in range(start, self.listWidget.count()):
+            if self.listWidget.item(row).data(Qt.ItemDataRole.UserRole) is not None:
+                return row
+        return None
+
+    def _on_current_changed(
+        self, current: QListWidgetItem | None, _previous: QListWidgetItem | None
+    ) -> None:
+        has_candidate = (
+            current is not None
+            and current.data(Qt.ItemDataRole.UserRole) is not None
+        )
+        self.yesButton.setEnabled(has_candidate)
 
     def _add_group(
         self,
@@ -157,6 +182,11 @@ class DeviceDialog(MessageBoxBase):
         self._add_group_header(title)
         if not candidates:
             item = QListWidgetItem(empty_text)
+            font = item.font()
+            font.setItalic(True)
+            item.setFont(font)
+            gray = QColor(150, 150, 150) if isDarkTheme() else QColor(120, 120, 120)
+            item.setForeground(QBrush(gray))
             item.setFlags(Qt.ItemFlag.NoItemFlags)
             self.listWidget.addItem(item)
             return
@@ -167,12 +197,13 @@ class DeviceDialog(MessageBoxBase):
         item = QListWidgetItem(text)
         font = item.font()
         font.setWeight(QFont.Weight.DemiBold)
+        font.setPointSize(font.pointSize() + 1)
         item.setFont(font)
         item.setFlags(Qt.ItemFlag.NoItemFlags)
         self.listWidget.addItem(item)
 
     def _add_candidate(self, candidate: DeviceCandidate) -> None:
-        icon = _smartphone_icon() if candidate.kind is DeviceKind.ADB else FIF.EMBED.icon()
+        icon = _smartphone_icon() if candidate.kind is DeviceKind.ADB else FIF.APPLICATION.icon()
         label = candidate.label
         if candidate.kind is DeviceKind.WIN32 and len(label) > 32:
             label = f"{label[:32]}..."

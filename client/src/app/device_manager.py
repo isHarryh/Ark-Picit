@@ -14,6 +14,7 @@ from src.auto import (
     DeviceKind,
     DeviceNotFoundError,
     Win32Device,
+    WindowInfo,
     find_adb_executable,
     list_devices,
     list_windows,
@@ -30,6 +31,26 @@ class DeviceCandidate:
     kind: DeviceKind
     label: str
     params: dict = field(default_factory=dict)
+    score: int = 0
+
+
+# Independent criteria that each add one point to a window's recommendation score.
+_GAME_TITLE_KEYWORDS = ("明日方舟", "arknights")
+
+
+def _score_window(window: WindowInfo) -> int:
+    """Return how strongly *window* looks like the game window (0-4)."""
+    score = 0
+    if window.class_name == "UnityWndClass":
+        score += 1
+    lowered = window.title.lower()
+    if any(kw in lowered for kw in _GAME_TITLE_KEYWORDS):
+        score += 1
+    if lowered in _GAME_TITLE_KEYWORDS:
+        score += 1
+    if window.visible:
+        score += 1
+    return score
 
 
 def _discover_all(adb_path: str) -> list[DeviceCandidate]:
@@ -38,11 +59,15 @@ def _discover_all(adb_path: str) -> list[DeviceCandidate]:
     for window in list_windows():
         if not window.title:
             continue
+        score = _score_window(window)
+        if score < 1:
+            continue
         candidates.append(
             DeviceCandidate(
                 kind=DeviceKind.WIN32,
                 label=window.title,
                 params={"title_regex": window.title, "class_regex": window.class_name},
+                score=score,
             )
         )
     # Emulators only appear in `adb devices` after an explicit connect, so

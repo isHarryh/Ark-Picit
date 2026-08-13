@@ -4,7 +4,7 @@
 <context>
     <name>AdminRequiredDialog</name>
     <message>
-        <location filename="../../gui/dialogs/device_dialog.py" line="+204"/>
+        <location filename="../../gui/dialogs/device_dialog.py" line="+235"/>
         <source>AdminRequiredTip</source>
         <translation>您需要以管理员身份运行此程序才可以使用 Windows 控制器。
 是否立即切换到管理员身份？</translation>
@@ -28,7 +28,7 @@
 <context>
     <name>AnnouncementDialog</name>
     <message>
-        <location filename="../../gui/pages/settings_page.py" line="+174"/>
+        <location filename="../../gui/pages/settings_page.py" line="+175"/>
         <location line="+6"/>
         <source>AnnouncementsTitle</source>
         <translation>公告</translation>
@@ -195,77 +195,77 @@
         <translation>在游戏内自动绘制</translation>
     </message>
     <message>
-        <location line="+238"/>
+        <location line="+239"/>
         <location line="+226"/>
         <source>CancelButton</source>
         <translation>取消</translation>
     </message>
     <message>
-        <location line="+50"/>
+        <location line="+51"/>
         <source>CanvasImportedTip</source>
         <translation>已从游戏载入画布。</translation>
     </message>
     <message>
-        <location line="-426"/>
+        <location line="-428"/>
         <source>ClearButton</source>
         <translation>清空</translation>
     </message>
     <message>
-        <location line="+358"/>
+        <location line="+359"/>
         <source>CodeImportedTip</source>
         <translation>已从分享码载入画作。</translation>
     </message>
     <message>
-        <location line="-415"/>
+        <location line="-416"/>
         <source>DescriptionLabel</source>
         <translation>描述：</translation>
     </message>
     <message>
-        <location line="+342"/>
+        <location line="+343"/>
         <location line="+48"/>
         <source>ErrorCodeUnparsable</source>
         <translation>无法解析此分享码。</translation>
     </message>
     <message>
-        <location line="-425"/>
+        <location line="-426"/>
         <source>ExportCodeButton</source>
         <translation>导出分享码</translation>
     </message>
     <message>
-        <location line="+379"/>
+        <location line="+380"/>
         <source>ExportFailedTitle</source>
         <translation>导出失败</translation>
     </message>
     <message>
-        <location line="-378"/>
+        <location line="-379"/>
         <source>ImportButton</source>
         <translation>导入</translation>
     </message>
     <message>
-        <location line="+416"/>
+        <location line="+417"/>
         <location line="+10"/>
-        <location line="+99"/>
+        <location line="+101"/>
         <source>ImportFailedTitle</source>
         <translation>导入失败</translation>
     </message>
     <message>
-        <location line="-377"/>
+        <location line="-381"/>
         <source>ImportFromCodeAction</source>
         <translation>从分享码导入</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+3"/>
         <source>ImportFromGameAction</source>
         <translation>从游戏画布导入</translation>
     </message>
     <message>
-        <location line="+296"/>
-        <location line="+68"/>
+        <location line="+300"/>
+        <location line="+69"/>
         <source>ImportedTitle</source>
         <translation>已导入</translation>
     </message>
     <message>
-        <location line="-33"/>
+        <location line="-34"/>
         <source>ImportingTitle</source>
         <translation>正在导入</translation>
     </message>
@@ -275,12 +275,12 @@
         <translation>加载失败</translation>
     </message>
     <message>
-        <location line="-234"/>
+        <location line="-235"/>
         <source>NameLabel</source>
         <translation>名称：</translation>
     </message>
     <message>
-        <location line="+298"/>
+        <location line="+299"/>
         <source>NameMissingTip</source>
         <translation>保存前请先输入名称。</translation>
     </message>
@@ -290,8 +290,8 @@
         <translation>缺少名称</translation>
     </message>
     <message>
-        <location line="-319"/>
-        <location line="+244"/>
+        <location line="-320"/>
+        <location line="+245"/>
         <source>NewButton</source>
         <translation>新建</translation>
     </message>
@@ -306,12 +306,12 @@
         <translation>新建画作？</translation>
     </message>
     <message>
-        <location line="-199"/>
+        <location line="-200"/>
         <source>OptionalDescriptionPlaceholder</source>
         <translation>可选描述</translation>
     </message>
     <message>
-        <location line="+429"/>
+        <location line="+430"/>
         <source>OverwriteButton</source>
         <translation>覆盖</translation>
     </message>
@@ -326,12 +326,12 @@
         <translation>覆盖当前画布？</translation>
     </message>
     <message>
-        <location line="-441"/>
+        <location line="-442"/>
         <source>PaintingNamePlaceholder</source>
         <translation>画作名称</translation>
     </message>
     <message>
-        <location line="+232"/>
+        <location line="+233"/>
         <source>PaintingNotFoundTip</source>
         <translation>未找到画作 %1。</translation>
     </message>
@@ -346,7 +346,7 @@
         <translation>正在读取游戏画布...</translation>
     </message>
     <message>
-        <location line="-455"/>
+        <location line="-456"/>
         <source>RulesetFormat</source>
         <translation>%1  （%2x%3）</translation>
     </message>
@@ -366,13 +366,13 @@
         <translation>保存</translation>
     </message>
     <message>
-        <location line="+350"/>
+        <location line="+351"/>
         <source>SavedTitle</source>
         <translation>已保存</translation>
     </message>
     <message>
-        <location line="-345"/>
-        <location line="+539"/>
+        <location line="-346"/>
+        <location line="+542"/>
         <source>SmartCreateButton</source>
         <translation>从图片智能创建</translation>
     </message>
@@ -382,7 +382,7 @@
         <translation>已生成像素画。请按需调整后保存。</translation>
     </message>
     <message>
-        <location line="-482"/>
+        <location line="-485"/>
         <source>ToolsTitle</source>
         <translation>工具</translation>
     </message>
@@ -390,17 +390,17 @@
 <context>
     <name>DeviceDialog</name>
     <message>
-        <location filename="../../gui/dialogs/device_dialog.py" line="-68"/>
+        <location filename="../../gui/dialogs/device_dialog.py" line="-100"/>
         <source>AdbDevicesGroup</source>
         <translation>ADB 设备</translation>
     </message>
     <message>
-        <location line="+130"/>
+        <location line="+162"/>
         <source>AdbUnauthorizedTip</source>
         <translation>请在设备或模拟器上接受调试授权提示，然后重试。</translation>
     </message>
     <message>
-        <location line="-163"/>
+        <location line="-204"/>
         <source>CancelButton</source>
         <translation>取消</translation>
     </message>
@@ -410,7 +410,7 @@
         <translation>连接</translation>
     </message>
     <message>
-        <location line="+152"/>
+        <location line="+193"/>
         <source>ConnectedTip</source>
         <translation>已连接到 %1</translation>
     </message>
@@ -430,32 +430,33 @@
         <translation>控制器</translation>
     </message>
     <message>
-        <location line="-112"/>
+        <location line="-144"/>
         <source>NoAdbDevicesEmpty</source>
-        <translation>未找到 ADB 设备。请先启动模拟器。</translation>
+        <translation>未找到 ADB 设备。请先启动模拟器，并在设置中开启 ADB 调试。</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+7"/>
+        <location line="+9"/>
         <source>NoGameWindowEmpty</source>
-        <translation>未找到游戏窗口。请先启动游戏。</translation>
+        <translation>未找到 PC 游戏窗口。请先启动 PC 游戏客户端。</translation>
     </message>
     <message>
         <location line="-1"/>
+        <source>OtherWindowsGroup</source>
+        <translation>其他 Windows 窗口（不推荐）</translation>
+    </message>
+    <message>
+        <location line="-9"/>
         <source>RecommendedWindowsGroup</source>
         <translation>建议的 Windows 窗口</translation>
     </message>
     <message>
-        <location line="-16"/>
+        <location line="-28"/>
         <source>SearchFailedTitle</source>
         <translation>无法搜索控制器</translation>
     </message>
     <message>
-        <location line="-39"/>
-        <source>SearchingDevicesTip</source>
-        <translation>正在搜索 Windows 窗口和 ADB 设备...</translation>
-    </message>
-    <message>
-        <location line="-2"/>
+        <location line="-41"/>
         <source>SearchingDevicesTitle</source>
         <translation>正在搜索控制器</translation>
     </message>
@@ -669,7 +670,7 @@
         <translation>探索</translation>
     </message>
     <message>
-        <location line="+171"/>
+        <location line="+174"/>
         <source>ExploreUnavailableTitle</source>
         <translation>探索功能目前不可用</translation>
     </message>
@@ -684,7 +685,7 @@
         <translation>您可在画廊中选择您的作品发布。</translation>
     </message>
     <message>
-        <location line="-155"/>
+        <location line="-158"/>
         <source>OrderAscending</source>
         <translation>升序</translation>
     </message>
@@ -694,24 +695,24 @@
         <translation>降序</translation>
     </message>
     <message>
-        <location line="+76"/>
+        <location line="+77"/>
         <source>PageFormat</source>
         <translation>第 %1 页</translation>
     </message>
     <message>
-        <location line="-97"/>
-        <location line="+149"/>
+        <location line="-98"/>
+        <location line="+152"/>
         <source>RefreshButton</source>
         <translation>刷新</translation>
     </message>
     <message>
-        <location line="-17"/>
-        <location line="+19"/>
+        <location line="-19"/>
+        <location line="+21"/>
         <source>RefreshCooldownFormat</source>
         <translation>刷新（%1 秒）</translation>
     </message>
     <message>
-        <location line="-87"/>
+        <location line="-90"/>
         <source>ViewAdmin</source>
         <translation>管理</translation>
     </message>
@@ -762,7 +763,7 @@
         <translation>备份</translation>
     </message>
     <message>
-        <location line="+56"/>
+        <location line="+51"/>
         <source>BackupExportedTitle</source>
         <translation>备份已导出</translation>
     </message>
@@ -793,12 +794,12 @@
         <translation>导出失败</translation>
     </message>
     <message>
-        <location line="-61"/>
+        <location line="-56"/>
         <source>GalleryTitle</source>
         <translation>画廊</translation>
     </message>
     <message>
-        <location line="+140"/>
+        <location line="+135"/>
         <source>GoToCreateButton</source>
         <translation>前往创作</translation>
     </message>
@@ -868,7 +869,7 @@
         </translation>
     </message>
     <message>
-        <location line="-59"/>
+        <location line="-54"/>
         <source>RefreshButton</source>
         <translation>刷新</translation>
     </message>
@@ -878,7 +879,7 @@
         <translation>按名称或描述搜索</translation>
     </message>
     <message>
-        <location line="+70"/>
+        <location line="+65"/>
         <source>ZipAllFilter</source>
         <translation>ZIP 压缩包 (*.zip);;所有文件 (*)</translation>
     </message>
@@ -891,12 +892,12 @@
 <context>
     <name>HomePage</name>
     <message>
-        <location filename="../../gui/pages/home_page.py" line="+115"/>
+        <location filename="../../gui/pages/home_page.py" line="+105"/>
         <source>AdbDeviceKind</source>
         <translation>ADB 设备</translation>
     </message>
     <message>
-        <location line="-78"/>
+        <location line="-68"/>
         <source>AppTagline</source>
         <translation>明日方舟像素画绘制工具</translation>
     </message>
@@ -906,17 +907,17 @@
         <translation>浏览并连接游戏窗口或 ADB 设备</translation>
     </message>
     <message>
-        <location line="+101"/>
+        <location line="+88"/>
         <source>CancelledStatus</source>
         <translation>已取消</translation>
     </message>
     <message>
-        <location line="-21"/>
+        <location line="-18"/>
         <source>CanvasRecognizedStatusFormat</source>
         <translation>成功：识别到画布 %1x%2（%3x%4，位于 %5,%6）</translation>
     </message>
     <message>
-        <location line="-81"/>
+        <location line="-71"/>
         <source>ConnectButton</source>
         <translation>连接</translation>
     </message>
@@ -932,7 +933,7 @@
         <translation>当前控制器</translation>
     </message>
     <message>
-        <location line="+101"/>
+        <location line="+88"/>
         <source>DrawingFinishedTitle</source>
         <translation>绘制完成</translation>
     </message>
@@ -942,18 +943,18 @@
         <translation>失败：%1</translation>
     </message>
     <message>
-        <location line="-128"/>
+        <location line="-115"/>
         <source>GoToCreateButton</source>
         <translation>前往创作</translation>
     </message>
     <message>
         <location line="+22"/>
-        <location line="+51"/>
+        <location line="+41"/>
         <source>NoControllerConnectedTip</source>
         <translation>未连接控制器</translation>
     </message>
     <message>
-        <location line="-46"/>
+        <location line="-36"/>
         <source>NotStartedStatus</source>
         <translation>未开始</translation>
     </message>
@@ -968,12 +969,12 @@
         <translation>快速开始</translation>
     </message>
     <message>
-        <location line="+90"/>
+        <location line="+80"/>
         <source>RunningStatusFormat</source>
         <translation>进行中：%1</translation>
     </message>
     <message>
-        <location line="+37"/>
+        <location line="+34"/>
         <source>SuccessStatusFormat</source>
         <translation>成功：%1</translation>
     </message>
@@ -983,12 +984,12 @@
         <translation>任务失败</translation>
     </message>
     <message>
-        <location line="-102"/>
+        <location line="-89"/>
         <source>TaskStatusCardTitle</source>
         <translation>任务状态</translation>
     </message>
     <message>
-        <location line="+40"/>
+        <location line="+30"/>
         <source>WindowsWindowKind</source>
         <translation>Windows 窗口</translation>
     </message>
@@ -1024,7 +1025,7 @@
 <context>
     <name>PaintingCard</name>
     <message>
-        <location filename="../../gui/pages/gallery_page.py" line="-118"/>
+        <location filename="../../gui/pages/gallery_page.py" line="-113"/>
         <location line="+44"/>
         <source>CancelButton</source>
         <translation>取消</translation>

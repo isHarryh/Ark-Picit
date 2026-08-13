@@ -39,6 +39,7 @@ class WindowInfo:
     hwnd: int
     title: str
     class_name: str
+    visible: bool
 
 
 def list_windows(
@@ -51,8 +52,6 @@ def list_windows(
     found: list[WindowInfo] = []
 
     def _enum_proc(hwnd: int, _lparam: int) -> bool:
-        if not user32.IsWindowVisible(hwnd):
-            return True
         class_buffer = ctypes.create_unicode_buffer(256)
         user32.GetClassNameW(hwnd, class_buffer, 256)
         class_name = class_buffer.value
@@ -60,11 +59,12 @@ def list_windows(
         title_buffer = ctypes.create_unicode_buffer(title_length + 1)
         user32.GetWindowTextW(hwnd, title_buffer, title_length + 1)
         title = title_buffer.value
+        visible = bool(user32.IsWindowVisible(hwnd))
         if title_pattern is not None and not title_pattern.search(title):
             return True
         if class_pattern is not None and not class_pattern.search(class_name):
             return True
-        found.append(WindowInfo(hwnd, title, class_name))
+        found.append(WindowInfo(hwnd, title, class_name, visible))
         return True
 
     user32.EnumWindows(EnumWindowsProc(_enum_proc), 0)

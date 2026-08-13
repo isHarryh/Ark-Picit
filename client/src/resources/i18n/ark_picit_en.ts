@@ -4,7 +4,7 @@
 <context>
     <name>AdminRequiredDialog</name>
     <message>
-        <location filename="../../gui/dialogs/device_dialog.py" line="+204"/>
+        <location filename="../../gui/dialogs/device_dialog.py" line="+235"/>
         <source>AdminRequiredTip</source>
         <translation>You need to run this program as an administrator to use the Windows controller.
 Switch to administrator mode now?</translation>
@@ -28,7 +28,7 @@ Switch to administrator mode now?</translation>
 <context>
     <name>AnnouncementDialog</name>
     <message>
-        <location filename="../../gui/pages/settings_page.py" line="+174"/>
+        <location filename="../../gui/pages/settings_page.py" line="+175"/>
         <location line="+6"/>
         <source>AnnouncementsTitle</source>
         <translation>Announcements</translation>
@@ -195,77 +195,77 @@ Switch to administrator mode now?</translation>
         <translation>Auto Paint in Game</translation>
     </message>
     <message>
-        <location line="+238"/>
+        <location line="+239"/>
         <location line="+226"/>
         <source>CancelButton</source>
         <translation>Cancel</translation>
     </message>
     <message>
-        <location line="+50"/>
+        <location line="+51"/>
         <source>CanvasImportedTip</source>
         <translation>Canvas loaded from the game.</translation>
     </message>
     <message>
-        <location line="-426"/>
+        <location line="-428"/>
         <source>ClearButton</source>
         <translation>Clear</translation>
     </message>
     <message>
-        <location line="+358"/>
+        <location line="+359"/>
         <source>CodeImportedTip</source>
         <translation>Painting loaded from code.</translation>
     </message>
     <message>
-        <location line="-415"/>
+        <location line="-416"/>
         <source>DescriptionLabel</source>
         <translation>Description:</translation>
     </message>
     <message>
-        <location line="+342"/>
+        <location line="+343"/>
         <location line="+48"/>
         <source>ErrorCodeUnparsable</source>
         <translation>The code cannot be parsed.</translation>
     </message>
     <message>
-        <location line="-425"/>
+        <location line="-426"/>
         <source>ExportCodeButton</source>
         <translation>Export Code</translation>
     </message>
     <message>
-        <location line="+379"/>
+        <location line="+380"/>
         <source>ExportFailedTitle</source>
         <translation>Export failed</translation>
     </message>
     <message>
-        <location line="-378"/>
+        <location line="-379"/>
         <source>ImportButton</source>
         <translation>Import</translation>
     </message>
     <message>
-        <location line="+416"/>
+        <location line="+417"/>
         <location line="+10"/>
-        <location line="+99"/>
+        <location line="+101"/>
         <source>ImportFailedTitle</source>
         <translation>Import failed</translation>
     </message>
     <message>
-        <location line="-377"/>
+        <location line="-381"/>
         <source>ImportFromCodeAction</source>
         <translation>Import From Code</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+3"/>
         <source>ImportFromGameAction</source>
         <translation>Import From Game Canvas</translation>
     </message>
     <message>
-        <location line="+296"/>
-        <location line="+68"/>
+        <location line="+300"/>
+        <location line="+69"/>
         <source>ImportedTitle</source>
         <translation>Imported</translation>
     </message>
     <message>
-        <location line="-33"/>
+        <location line="-34"/>
         <source>ImportingTitle</source>
         <translation>Importing</translation>
     </message>
@@ -275,12 +275,12 @@ Switch to administrator mode now?</translation>
         <translation>Load failed</translation>
     </message>
     <message>
-        <location line="-234"/>
+        <location line="-235"/>
         <source>NameLabel</source>
         <translation>Name:</translation>
     </message>
     <message>
-        <location line="+298"/>
+        <location line="+299"/>
         <source>NameMissingTip</source>
         <translation>Please enter a name before saving.</translation>
     </message>
@@ -290,8 +290,8 @@ Switch to administrator mode now?</translation>
         <translation>Name missing</translation>
     </message>
     <message>
-        <location line="-319"/>
-        <location line="+244"/>
+        <location line="-320"/>
+        <location line="+245"/>
         <source>NewButton</source>
         <translation>New</translation>
     </message>
@@ -306,12 +306,12 @@ Switch to administrator mode now?</translation>
         <translation>New painting?</translation>
     </message>
     <message>
-        <location line="-199"/>
+        <location line="-200"/>
         <source>OptionalDescriptionPlaceholder</source>
         <translation>Optional description</translation>
     </message>
     <message>
-        <location line="+429"/>
+        <location line="+430"/>
         <source>OverwriteButton</source>
         <translation>Overwrite</translation>
     </message>
@@ -326,12 +326,12 @@ Switch to administrator mode now?</translation>
         <translation>Overwrite current canvas?</translation>
     </message>
     <message>
-        <location line="-441"/>
+        <location line="-442"/>
         <source>PaintingNamePlaceholder</source>
         <translation>Painting name</translation>
     </message>
     <message>
-        <location line="+232"/>
+        <location line="+233"/>
         <source>PaintingNotFoundTip</source>
         <translation>Painting %1 not found.</translation>
     </message>
@@ -346,7 +346,7 @@ Switch to administrator mode now?</translation>
         <translation>Reading the in-game canvas...</translation>
     </message>
     <message>
-        <location line="-455"/>
+        <location line="-456"/>
         <source>RulesetFormat</source>
         <translation>%1  (%2x%3)</translation>
     </message>
@@ -366,13 +366,13 @@ Switch to administrator mode now?</translation>
         <translation>Save</translation>
     </message>
     <message>
-        <location line="+350"/>
+        <location line="+351"/>
         <source>SavedTitle</source>
         <translation>Saved</translation>
     </message>
     <message>
-        <location line="-345"/>
-        <location line="+539"/>
+        <location line="-346"/>
+        <location line="+542"/>
         <source>SmartCreateButton</source>
         <translation>Image Smart Create</translation>
     </message>
@@ -382,7 +382,7 @@ Switch to administrator mode now?</translation>
         <translation>Pixel art generated. Adjust as needed, then Save.</translation>
     </message>
     <message>
-        <location line="-482"/>
+        <location line="-485"/>
         <source>ToolsTitle</source>
         <translation>Tools</translation>
     </message>
@@ -390,17 +390,17 @@ Switch to administrator mode now?</translation>
 <context>
     <name>DeviceDialog</name>
     <message>
-        <location filename="../../gui/dialogs/device_dialog.py" line="-68"/>
+        <location filename="../../gui/dialogs/device_dialog.py" line="-100"/>
         <source>AdbDevicesGroup</source>
         <translation>ADB Devices</translation>
     </message>
     <message>
-        <location line="+130"/>
+        <location line="+162"/>
         <source>AdbUnauthorizedTip</source>
         <translation>Accept the debugging authorization prompt on the device or in the emulator, then try again.</translation>
     </message>
     <message>
-        <location line="-163"/>
+        <location line="-204"/>
         <source>CancelButton</source>
         <translation>Cancel</translation>
     </message>
@@ -410,7 +410,7 @@ Switch to administrator mode now?</translation>
         <translation>Connect</translation>
     </message>
     <message>
-        <location line="+152"/>
+        <location line="+193"/>
         <source>ConnectedTip</source>
         <translation>Connected to %1</translation>
     </message>
@@ -430,32 +430,33 @@ Switch to administrator mode now?</translation>
         <translation>controller</translation>
     </message>
     <message>
-        <location line="-112"/>
+        <location line="-144"/>
         <source>NoAdbDevicesEmpty</source>
-        <translation>No ADB devices found. Start an emulator first.</translation>
+        <translation>No ADB devices found. Start an emulator first and ensure ADB debugging is enabled.</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+7"/>
+        <location line="+9"/>
         <source>NoGameWindowEmpty</source>
-        <translation>No game window found. Start the game first.</translation>
+        <translation>No PC game window found. Start the PC game client first.</translation>
     </message>
     <message>
         <location line="-1"/>
+        <source>OtherWindowsGroup</source>
+        <translation>Other Windows</translation>
+    </message>
+    <message>
+        <location line="-9"/>
         <source>RecommendedWindowsGroup</source>
         <translation>Recommended Windows</translation>
     </message>
     <message>
-        <location line="-16"/>
+        <location line="-28"/>
         <source>SearchFailedTitle</source>
         <translation>Unable to search for controllers</translation>
     </message>
     <message>
-        <location line="-39"/>
-        <source>SearchingDevicesTip</source>
-        <translation>Checking Windows and ADB devices...</translation>
-    </message>
-    <message>
-        <location line="-2"/>
+        <location line="-41"/>
         <source>SearchingDevicesTitle</source>
         <translation>Searching for controllers</translation>
     </message>
@@ -669,7 +670,7 @@ Switch to administrator mode now?</translation>
         <translation>Explore</translation>
     </message>
     <message>
-        <location line="+171"/>
+        <location line="+174"/>
         <source>ExploreUnavailableTitle</source>
         <translation>Explore is currently unavailable</translation>
     </message>
@@ -684,7 +685,7 @@ Switch to administrator mode now?</translation>
         <translation>You can publish your own artworks from your gallery.</translation>
     </message>
     <message>
-        <location line="-155"/>
+        <location line="-158"/>
         <source>OrderAscending</source>
         <translation>Ascending</translation>
     </message>
@@ -694,24 +695,24 @@ Switch to administrator mode now?</translation>
         <translation>Descending</translation>
     </message>
     <message>
-        <location line="+76"/>
+        <location line="+77"/>
         <source>PageFormat</source>
         <translation>Page %1</translation>
     </message>
     <message>
-        <location line="-97"/>
-        <location line="+149"/>
+        <location line="-98"/>
+        <location line="+152"/>
         <source>RefreshButton</source>
         <translation>Refresh</translation>
     </message>
     <message>
-        <location line="-17"/>
-        <location line="+19"/>
+        <location line="-19"/>
+        <location line="+21"/>
         <source>RefreshCooldownFormat</source>
         <translation>Refresh (%1s)</translation>
     </message>
     <message>
-        <location line="-87"/>
+        <location line="-90"/>
         <source>ViewAdmin</source>
         <translation>Admin</translation>
     </message>
@@ -762,7 +763,7 @@ Switch to administrator mode now?</translation>
         <translation>Backup</translation>
     </message>
     <message>
-        <location line="+56"/>
+        <location line="+51"/>
         <source>BackupExportedTitle</source>
         <translation>Backup exported</translation>
     </message>
@@ -793,12 +794,12 @@ Switch to administrator mode now?</translation>
         <translation>Export failed</translation>
     </message>
     <message>
-        <location line="-61"/>
+        <location line="-56"/>
         <source>GalleryTitle</source>
         <translation>Gallery</translation>
     </message>
     <message>
-        <location line="+140"/>
+        <location line="+135"/>
         <source>GoToCreateButton</source>
         <translation>Go to Create</translation>
     </message>
@@ -870,7 +871,7 @@ Switch to administrator mode now?</translation>
         </translation>
     </message>
     <message>
-        <location line="-59"/>
+        <location line="-54"/>
         <source>RefreshButton</source>
         <translation>Refresh</translation>
     </message>
@@ -880,7 +881,7 @@ Switch to administrator mode now?</translation>
         <translation>Search by name or description</translation>
     </message>
     <message>
-        <location line="+70"/>
+        <location line="+65"/>
         <source>ZipAllFilter</source>
         <translation>ZIP archives (*.zip);;All files (*)</translation>
     </message>
@@ -893,12 +894,12 @@ Switch to administrator mode now?</translation>
 <context>
     <name>HomePage</name>
     <message>
-        <location filename="../../gui/pages/home_page.py" line="+115"/>
+        <location filename="../../gui/pages/home_page.py" line="+105"/>
         <source>AdbDeviceKind</source>
         <translation>ADB device</translation>
     </message>
     <message>
-        <location line="-78"/>
+        <location line="-68"/>
         <source>AppTagline</source>
         <translation>Arknights Pixel Art Painter</translation>
     </message>
@@ -908,17 +909,17 @@ Switch to administrator mode now?</translation>
         <translation>Browse and connect a game window or ADB device</translation>
     </message>
     <message>
-        <location line="+101"/>
+        <location line="+88"/>
         <source>CancelledStatus</source>
         <translation>Cancelled</translation>
     </message>
     <message>
-        <location line="-21"/>
+        <location line="-18"/>
         <source>CanvasRecognizedStatusFormat</source>
         <translation>Success: canvas %1x%2 recognized (%3x%4 at %5,%6)</translation>
     </message>
     <message>
-        <location line="-81"/>
+        <location line="-71"/>
         <source>ConnectButton</source>
         <translation>Connect</translation>
     </message>
@@ -934,7 +935,7 @@ Switch to administrator mode now?</translation>
         <translation>Current Controller</translation>
     </message>
     <message>
-        <location line="+101"/>
+        <location line="+88"/>
         <source>DrawingFinishedTitle</source>
         <translation>Drawing finished</translation>
     </message>
@@ -944,18 +945,18 @@ Switch to administrator mode now?</translation>
         <translation>Failed: %1</translation>
     </message>
     <message>
-        <location line="-128"/>
+        <location line="-115"/>
         <source>GoToCreateButton</source>
         <translation>Go to Create</translation>
     </message>
     <message>
         <location line="+22"/>
-        <location line="+51"/>
+        <location line="+41"/>
         <source>NoControllerConnectedTip</source>
         <translation>No controller connected</translation>
     </message>
     <message>
-        <location line="-46"/>
+        <location line="-36"/>
         <source>NotStartedStatus</source>
         <translation>Not started</translation>
     </message>
@@ -970,12 +971,12 @@ Switch to administrator mode now?</translation>
         <translation>Quick Start</translation>
     </message>
     <message>
-        <location line="+90"/>
+        <location line="+80"/>
         <source>RunningStatusFormat</source>
         <translation>Running: %1</translation>
     </message>
     <message>
-        <location line="+37"/>
+        <location line="+34"/>
         <source>SuccessStatusFormat</source>
         <translation>Success: %1</translation>
     </message>
@@ -985,12 +986,12 @@ Switch to administrator mode now?</translation>
         <translation>Task failed</translation>
     </message>
     <message>
-        <location line="-102"/>
+        <location line="-89"/>
         <source>TaskStatusCardTitle</source>
         <translation>Task Status</translation>
     </message>
     <message>
-        <location line="+40"/>
+        <location line="+30"/>
         <source>WindowsWindowKind</source>
         <translation>Windows window</translation>
     </message>
@@ -1026,7 +1027,7 @@ Switch to administrator mode now?</translation>
 <context>
     <name>PaintingCard</name>
     <message>
-        <location filename="../../gui/pages/gallery_page.py" line="-118"/>
+        <location filename="../../gui/pages/gallery_page.py" line="-113"/>
         <location line="+44"/>
         <source>CancelButton</source>
         <translation>Cancel</translation>
