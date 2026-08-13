@@ -1,6 +1,6 @@
 [project]
 name = "ark-picit"
-version = "1.0.3"
+version = "1.0.4"
 description = "Arknights Pixel Art Painter"
 authors = [{ name = "Harry Huang", email = "harryhuang2652@qq.com" }]
 license = "BSD-3-Clause"
