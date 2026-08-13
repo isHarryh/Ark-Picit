@@ -28,7 +28,7 @@
 <context>
     <name>AnnouncementDialog</name>
     <message>
-        <location filename="../../gui/pages/settings_page.py" line="+175"/>
+        <location filename="../../gui/pages/settings_page.py" line="+182"/>
         <location line="+6"/>
         <source>AnnouncementsTitle</source>
         <translation>公告</translation>
@@ -1322,7 +1322,7 @@
 <context>
     <name>SettingsPage</name>
     <message>
-        <location filename="../../gui/pages/settings_page.py" line="+123"/>
+        <location filename="../../gui/pages/settings_page.py" line="+119"/>
         <source>AdvancedGroupTitle</source>
         <translation>高级</translation>
     </message>
@@ -1337,6 +1337,7 @@
         <translation>深色</translation>
     </message>
     <message>
+        <location line="+0"/>
         <location line="+8"/>
         <source>FollowSystemLabel</source>
         <translation>跟随系统</translation>
@@ -1363,12 +1364,7 @@
         <translation>网络</translation>
     </message>
     <message>
-        <location line="-29"/>
-        <source>SystemThemeLabel</source>
-        <translation>跟随系统设置</translation>
-    </message>
-    <message>
-        <location line="-2"/>
+        <location line="-31"/>
         <source>ThemeCardTitle</source>
         <translation>主题</translation>
     </message>
@@ -1710,7 +1706,7 @@
 <context>
     <name>_AboutCard</name>
     <message>
-        <location filename="../../gui/pages/settings_page.py" line="-338"/>
+        <location filename="../../gui/pages/settings_page.py" line="-341"/>
         <source>AboutTitle</source>
         <translation>关于</translation>
     </message>
@@ -1742,7 +1738,7 @@
 <context>
     <name>_NetworkCard</name>
     <message>
-        <location line="+34"/>
+        <location line="+41"/>
         <source>DisableNetworkTitle</source>
         <translation>禁用联网功能</translation>
     </message>
@@ -1758,7 +1754,7 @@
 <context>
     <name>_TokenCard</name>
     <message>
-        <location line="+49"/>
+        <location line="+45"/>
         <source>CodeAcceptedTip</source>
         <translation>代码已被接受。</translation>
     </message>
@@ -1773,13 +1769,8 @@
         <translation>请先输入代码。</translation>
     </message>
     <message>
-        <location line="-13"/>
-        <source>EnterCodePlaceholder</source>
-        <translation>输入代码</translation>
-    </message>
-    <message>
-        <location line="-2"/>
-        <location line="+15"/>
+        <location line="-11"/>
+        <location line="+11"/>
         <source>MysteryCodeTitle</source>
         <translation>神秘代码</translation>
     </message>

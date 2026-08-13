@@ -91,7 +91,14 @@ class _AboutCard(SettingCard):
         self.hBoxLayout.addSpacing(16)
 
 
-class _NetworkCard(SettingCard):
+class _ExpandItemCard(SettingCard):
+    """SettingCard without its own background, for use inside an expand panel."""
+
+    def paintEvent(self, e) -> None:
+        pass
+
+
+class _NetworkCard(_ExpandItemCard):
     """Toggles network communication; locked when the API version mismatches."""
 
     def __init__(self, parent=None):
@@ -327,7 +334,7 @@ class AnnouncementManagerDialog(QDialog):
         plaza.publish_announcements(announcements, on_done)
 
 
-class _ServerUrlCard(SettingCard):
+class _ServerUrlCard(_ExpandItemCard):
     """Edits the API server base URL."""
 
     def __init__(self, parent=None):
@@ -344,20 +351,16 @@ class _ServerUrlCard(SettingCard):
         plaza.set_server_url(self.urlEdit.text().strip())
 
 
-class _TokenCard(SettingCard):
+class _TokenCard(_ExpandItemCard):
     """Verifies the mystery code; unlocks the Admin explore view on success."""
 
     def __init__(self, parent=None):
         super().__init__(FIF.CERTIFICATE, self.tr("MysteryCodeTitle"), None, parent)
         self.tokenEdit = PasswordLineEdit(self)
-        self.tokenEdit.setPlaceholderText(self.tr("EnterCodePlaceholder"))
-        self.tokenEdit.setFixedWidth(200)
-        self.verifyBtn = ToolButton(FIF.ACCEPT, self)
+        self.tokenEdit.setFixedWidth(260)
         self.hBoxLayout.addWidget(self.tokenEdit, 0, Qt.AlignmentFlag.AlignRight)
-        self.hBoxLayout.addSpacing(8)
-        self.hBoxLayout.addWidget(self.verifyBtn, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(16)
-        self.verifyBtn.clicked.connect(self._verify)
+        self.tokenEdit.editingFinished.connect(self._verify)
 
     def _verify(self) -> None:
         token = self.tokenEdit.text().strip()
@@ -367,10 +370,10 @@ class _TokenCard(SettingCard):
                 parent=self.window(),
             )
             return
-        self.verifyBtn.setEnabled(False)
+        self.tokenEdit.setEnabled(False)
 
         def on_done(result: HttpResult) -> None:
-            self.verifyBtn.setEnabled(True)
+            self.tokenEdit.setEnabled(True)
             if not result.ok:
                 InfoBar.error(
                     self.tr("VerificationFailedTitle"), localize_http_error(result),
@@ -416,7 +419,7 @@ class SettingsPage(BasePage):
             FIF.BRUSH,
             self.tr("ThemeCardTitle"),
             None,
-            texts=[self.tr("LightLabel"), self.tr("DarkLabel"), self.tr("SystemThemeLabel")],
+            texts=[self.tr("FollowSystemLabel"), self.tr("LightLabel"), self.tr("DarkLabel")],
         )
 
         self.languageCard = OptionsSettingCard(

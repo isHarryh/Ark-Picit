@@ -21,7 +21,7 @@ class AppConfig(QConfig):
     # Appearance
     themeMode = OptionsConfigItem(
         "Appearance", "ThemeMode", Theme.AUTO,
-        OptionsValidator([Theme.LIGHT, Theme.DARK, Theme.AUTO]),
+        OptionsValidator([Theme.AUTO, Theme.LIGHT, Theme.DARK]),
         EnumSerializer(Theme),
     )
     language = OptionsConfigItem(

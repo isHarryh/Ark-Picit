@@ -28,7 +28,7 @@ Switch to administrator mode now?</translation>
 <context>
     <name>AnnouncementDialog</name>
     <message>
-        <location filename="../../gui/pages/settings_page.py" line="+175"/>
+        <location filename="../../gui/pages/settings_page.py" line="+182"/>
         <location line="+6"/>
         <source>AnnouncementsTitle</source>
         <translation>Announcements</translation>
@@ -1323,7 +1323,7 @@ Please move the program to a normal folder (for example D:\ArkPicit) and start i
 <context>
     <name>SettingsPage</name>
     <message>
-        <location filename="../../gui/pages/settings_page.py" line="+123"/>
+        <location filename="../../gui/pages/settings_page.py" line="+119"/>
         <source>AdvancedGroupTitle</source>
         <translation>Advanced</translation>
     </message>
@@ -1338,6 +1338,7 @@ Please move the program to a normal folder (for example D:\ArkPicit) and start i
         <translation>Dark</translation>
     </message>
     <message>
+        <location line="+0"/>
         <location line="+8"/>
         <source>FollowSystemLabel</source>
         <translation>Follow system</translation>
@@ -1364,12 +1365,7 @@ Please move the program to a normal folder (for example D:\ArkPicit) and start i
         <translation>Network</translation>
     </message>
     <message>
-        <location line="-29"/>
-        <source>SystemThemeLabel</source>
-        <translation>Use system setting</translation>
-    </message>
-    <message>
-        <location line="-2"/>
+        <location line="-31"/>
         <source>ThemeCardTitle</source>
         <translation>Theme</translation>
     </message>
@@ -1711,7 +1707,7 @@ Click a button above to begin.</translation>
 <context>
     <name>_AboutCard</name>
     <message>
-        <location filename="../../gui/pages/settings_page.py" line="-338"/>
+        <location filename="../../gui/pages/settings_page.py" line="-341"/>
         <source>AboutTitle</source>
         <translation>About</translation>
     </message>
@@ -1743,7 +1739,7 @@ Click a button above to begin.</translation>
 <context>
     <name>_NetworkCard</name>
     <message>
-        <location line="+34"/>
+        <location line="+41"/>
         <source>DisableNetworkTitle</source>
         <translation>Disable network</translation>
     </message>
@@ -1759,7 +1755,7 @@ Click a button above to begin.</translation>
 <context>
     <name>_TokenCard</name>
     <message>
-        <location line="+49"/>
+        <location line="+45"/>
         <source>CodeAcceptedTip</source>
         <translation>The code was accepted.</translation>
     </message>
@@ -1774,13 +1770,8 @@ Click a button above to begin.</translation>
         <translation>Please enter a code first.</translation>
     </message>
     <message>
-        <location line="-13"/>
-        <source>EnterCodePlaceholder</source>
-        <translation>Enter the code</translation>
-    </message>
-    <message>
-        <location line="-2"/>
-        <location line="+15"/>
+        <location line="-11"/>
+        <location line="+11"/>
         <source>MysteryCodeTitle</source>
         <translation>Mystery code</translation>
     </message>
