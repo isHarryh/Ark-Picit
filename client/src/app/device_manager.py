@@ -60,7 +60,7 @@ def _discover_all(adb_path: str) -> list[DeviceCandidate]:
         if not window.title:
             continue
         score = _score_window(window)
-        if score < 1:
+        if score < 2:
             continue
         candidates.append(
             DeviceCandidate(
@@ -70,20 +70,24 @@ def _discover_all(adb_path: str) -> list[DeviceCandidate]:
                 score=score,
             )
         )
-    # Emulators only appear in `adb devices` after an explicit connect, so
-    # probe the well-known local ports first, then list the actual states.
-    probe_emulators(adb_path)
-    for info in list_devices(adb_path):
-        label = f"{info.serial} (adb)"
-        if info.state != "device":
-            label += f" [{info.state}]"
-        candidates.append(
-            DeviceCandidate(
-                kind=DeviceKind.ADB,
-                label=label,
-                params={"serial": info.serial, "adb_path": adb_path},
+    # ADB probing must never discard the window candidates, so use try/except here.
+    try:
+        # Emulators only appear in `adb devices` after an explicit connect,
+        # so probe the well-known local ports first, then list the actual states.
+        probe_emulators(adb_path)
+        for info in list_devices(adb_path):
+            label = f"{info.serial} (adb)"
+            if info.state != "device":
+                label += f" [{info.state}]"
+            candidates.append(
+                DeviceCandidate(
+                    kind=DeviceKind.ADB,
+                    label=label,
+                    params={"serial": info.serial, "adb_path": adb_path},
+                )
             )
-        )
+    except Exception as exc:
+        logger.warning("ADB discovery failed; keeping window candidates: %s", exc)
     return candidates
 
 

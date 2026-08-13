@@ -4,7 +4,7 @@
 <context>
     <name>AdminRequiredDialog</name>
     <message>
-        <location filename="../../gui/dialogs/device_dialog.py" line="+235"/>
+        <location filename="../../gui/dialogs/device_dialog.py" line="+228"/>
         <source>AdminRequiredTip</source>
         <translation>您需要以管理员身份运行此程序才可以使用 Windows 控制器。
 是否立即切换到管理员身份？</translation>
@@ -390,17 +390,17 @@
 <context>
     <name>DeviceDialog</name>
     <message>
-        <location filename="../../gui/dialogs/device_dialog.py" line="-100"/>
+        <location filename="../../gui/dialogs/device_dialog.py" line="-93"/>
         <source>AdbDevicesGroup</source>
         <translation>ADB 设备</translation>
     </message>
     <message>
-        <location line="+162"/>
+        <location line="+155"/>
         <source>AdbUnauthorizedTip</source>
         <translation>请在设备或模拟器上接受调试授权提示，然后重试。</translation>
     </message>
     <message>
-        <location line="-204"/>
+        <location line="-197"/>
         <source>CancelButton</source>
         <translation>取消</translation>
     </message>
@@ -410,7 +410,7 @@
         <translation>连接</translation>
     </message>
     <message>
-        <location line="+193"/>
+        <location line="+186"/>
         <source>ConnectedTip</source>
         <translation>已连接到 %1</translation>
     </message>
@@ -430,23 +430,17 @@
         <translation>控制器</translation>
     </message>
     <message>
-        <location line="-144"/>
+        <location line="-137"/>
         <source>NoAdbDevicesEmpty</source>
         <translation>未找到 ADB 设备。请先启动模拟器，并在设置中开启 ADB 调试。</translation>
     </message>
     <message>
         <location line="+7"/>
-        <location line="+9"/>
         <source>NoGameWindowEmpty</source>
         <translation>未找到 PC 游戏窗口。请先启动 PC 游戏客户端。</translation>
     </message>
     <message>
         <location line="-1"/>
-        <source>OtherWindowsGroup</source>
-        <translation>其他 Windows 窗口（不推荐）</translation>
-    </message>
-    <message>
-        <location line="-9"/>
         <source>RecommendedWindowsGroup</source>
         <translation>建议的 Windows 窗口</translation>
     </message>

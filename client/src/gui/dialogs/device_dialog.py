@@ -146,13 +146,6 @@ class DeviceDialog(MessageBoxBase):
         if priority_row is None:
             priority_row = self._first_candidate_row(before_recommended)
 
-        if not recommended:
-            other = [c for c in win32s if c.score >= 1]
-            self._add_group(
-                self.tr("OtherWindowsGroup"), other,
-                self.tr("NoGameWindowEmpty"),
-            )
-
         if priority_row is not None:
             self.listWidget.setCurrentRow(priority_row)
         else:

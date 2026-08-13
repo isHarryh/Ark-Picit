@@ -4,7 +4,7 @@
 <context>
     <name>AdminRequiredDialog</name>
     <message>
-        <location filename="../../gui/dialogs/device_dialog.py" line="+235"/>
+        <location filename="../../gui/dialogs/device_dialog.py" line="+228"/>
         <source>AdminRequiredTip</source>
         <translation>You need to run this program as an administrator to use the Windows controller.
 Switch to administrator mode now?</translation>
@@ -390,17 +390,17 @@ Switch to administrator mode now?</translation>
 <context>
     <name>DeviceDialog</name>
     <message>
-        <location filename="../../gui/dialogs/device_dialog.py" line="-100"/>
+        <location filename="../../gui/dialogs/device_dialog.py" line="-93"/>
         <source>AdbDevicesGroup</source>
         <translation>ADB Devices</translation>
     </message>
     <message>
-        <location line="+162"/>
+        <location line="+155"/>
         <source>AdbUnauthorizedTip</source>
         <translation>Accept the debugging authorization prompt on the device or in the emulator, then try again.</translation>
     </message>
     <message>
-        <location line="-204"/>
+        <location line="-197"/>
         <source>CancelButton</source>
         <translation>Cancel</translation>
     </message>
@@ -410,7 +410,7 @@ Switch to administrator mode now?</translation>
         <translation>Connect</translation>
     </message>
     <message>
-        <location line="+193"/>
+        <location line="+186"/>
         <source>ConnectedTip</source>
         <translation>Connected to %1</translation>
     </message>
@@ -430,23 +430,17 @@ Switch to administrator mode now?</translation>
         <translation>controller</translation>
     </message>
     <message>
-        <location line="-144"/>
+        <location line="-137"/>
         <source>NoAdbDevicesEmpty</source>
         <translation>No ADB devices found. Start an emulator first and ensure ADB debugging is enabled.</translation>
     </message>
     <message>
         <location line="+7"/>
-        <location line="+9"/>
         <source>NoGameWindowEmpty</source>
         <translation>No PC game window found. Start the PC game client first.</translation>
     </message>
     <message>
         <location line="-1"/>
-        <source>OtherWindowsGroup</source>
-        <translation>Other Windows</translation>
-    </message>
-    <message>
-        <location line="-9"/>
         <source>RecommendedWindowsGroup</source>
         <translation>Recommended Windows</translation>
     </message>
